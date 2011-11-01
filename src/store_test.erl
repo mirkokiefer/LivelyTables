@@ -35,26 +35,29 @@ test_property_read() ->
   First = store:read_property(First#property.uri).
 
 test_types() ->
-  Person = #type{uri="type/person", label="Person", legal_properties=["property/age"]},
-  Employee = #type{uri="type/employee", label="Employee", parents=["type/person"],
-    legal_properties=["property/salary", "property/boss"]},
-  Manager = #type{uri="type/manager", label="Manager", parents=["type/employee"], legal_properties=["property/manages"]},
+  Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
+  Employee = #type{uri= <<"employee">>, label= <<"Employee">>, parents=[<<"person">>],
+    legal_properties=[<<"salary">>, <<"boss">>]},
+  Manager = #type{uri= <<"manager">>, label= <<"Manager">>, parents=[<<"employee">>],
+    legal_properties=[<<"manages">>]},
   [Person, Employee, Manager].
 
 test_items() ->
-  Paul = #item{uri="paul", label="Paul", types=["/type/employee"], properties=[
-    {"property/salary", 5000},
-    {"property/boss", "jim"}
+  Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
+    {<<"salary">>, 5000},
+    {<<"boss">>, <<"jim">>}
   ]},
-  Jim = #item{uri="jim", label="Jim", types=["/type/employee"], properties=[
-    {"property/salary", 10000},
-    {"property/boss", "theboss"},
-    {"property/manages", ["paul"]}
+  Jim = #item{uri= <<"jim">>, label= <<"Jim">>, types=[<<"employee">>], properties=[
+    {<<"salary">>, 10000},
+    {<<"boss">>, <<"theboss">>},
+    {<<"manages">>, [<<"paul">>]}
   ]},
   [Paul, Jim].
 
 test_properties() ->
-  Manages = #property{uri="property/manages", label="Manages", ranges=["type/employee"], arity=many, inverse="property/boss"},
-  Boss = #property{uri="property/boss", label="Boss", ranges=["type/manager"], arity=many, inverse="property/manages"},
-  Salary = #property{uri="property/salary", label="Salary", ranges="type/number"},
+  Manages = #property{uri= <<"manages">>, label= <<"Manages">>, ranges=[<<"employee">>],
+    arity=many, inverse= <<"boss">>},
+  Boss = #property{uri= <<"boss">>, label= <<"Boss">>, ranges=[<<"manager">>],
+    arity=many, inverse= <<"manages">>},
+  Salary = #property{uri= <<"salary">>, label= <<"Salary">>, ranges= <<"number">>},
   [Manages, Boss, Salary].
