@@ -1,4 +1,4 @@
--module(server_test).
+-module(store_test).
 
 -export([test/0]).
 
