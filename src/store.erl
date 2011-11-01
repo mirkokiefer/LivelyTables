@@ -1,16 +1,13 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([lookup/2, read_item/1, read_type/1, read_property/1]).
--export([test_store_items/0]).
+-export([write_all/1, lookup/2, read_item/1, read_type/1, read_property/1]).
+
+-include("../include/records.hrl").
 
 -include_lib("stdlib/include/qlc.hrl" ).
 
 -define(DB_PATH, "../output/tuples.tab").
-
--record(item, {uri, label, types=["type/thing"], properties=[]}).
--record(type, {uri, label, types=["type/type"], properties=[], parents=["type/thing"], legal_properties=[]}).
--record(property, {uri, label, types=["type/property"], properties=[], ranges=["type/thing"], arity=one, inverse}).
 
 -record(item_table, {uri, label, properties=[]}).
 -record(item_type_table, {item, type}).
@@ -56,43 +53,16 @@ start() ->
 stop() ->
   mnesia:stop().
 
-test_store_items() ->
-  store(test_types() ++ test_items() ++ test_properties()).
+write_all(Records) ->
+  F = fun() -> write_each(Records) end,
+  mnesia:transaction(F),
+  {ok, success}.
 
-test_types() ->
-  Person = #type{uri="type/person", label="Person", legal_properties=["property/age"]},
-  Employee = #type{uri="type/employee", label="Employee", parents=["type/person"],
-    legal_properties=["property/salary", "property/boss"]},
-  Manager = #type{uri="type/manager", label="Manager", parents=["type/employee"], legal_properties=["property/manages"]},
-  [Person, Employee, Manager].
+write_each([]) -> {ok, success};
 
-test_items() ->
-  Paul = #item{uri="paul", label="Paul", types=["/type/employee"], properties=[
-    {"property/salary", 5000},
-    {"property/boss", "jim"}
-  ]},
-  Jim = #item{uri="jim", label="Jim", types=["/type/employee"], properties=[
-    {"property/salary", 10000},
-    {"property/boss", "theboss"},
-    {"property/manages", ["paul"]}
-  ]},
-  [Paul, Jim].
-
-test_properties() ->
-  Manages = #property{uri="property/manages", label="Manages", ranges=["type/employee"], arity=many, inverse="property/boss"},
-  Boss = #property{uri="property/boss", label="Boss", ranges=["type/manager"], arity=many, inverse="property/manages"},
-  Salary = #property{uri="property/salary", label="Salary", ranges="type/number"},
-  [Manages, Boss, Salary].
-
-store(Records) ->
-  F = fun() -> store_each(Records) end,
-  mnesia:transaction(F).
-
-store_each([]) -> {ok, success};
-
-store_each([First|Rest]) ->
+write_each([First|Rest]) ->
   write(First),
-  store_each(Rest).
+  write_each(Rest).
 
 write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
   ItemTableRecord = #item_table{uri=URI, label=Label, properties=Properties},
