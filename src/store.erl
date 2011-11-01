@@ -17,13 +17,28 @@
 
 tables() -> [item_table, item_type_table, type_table, type_parent_table, property_table].
 
-table_type(Table) ->
+table_options(Table) -> 
   case Table of
-    item_table -> set;
-    item_type_table -> bag;
-    type_table -> set;
-    type_parent_table -> bag;
-    property_table -> set
+    item_table -> [
+      {attributes, record_info(fields, item_table)},
+      {type, set}
+    ];
+    item_type_table -> [
+      {attributes, record_info(fields, item_type_table)},
+      {type, bag}
+    ];
+    type_table -> [
+      {attributes, record_info(fields, type_table)},
+      {type, set}
+    ];
+    type_parent_table -> [
+      {attributes, record_info(fields, type_parent_table)},
+      {type, set}
+    ];
+    property_table -> [
+      {attributes, record_info(fields, property_table)},
+      {type, set}
+    ]
   end.
 
 init() ->
@@ -32,15 +47,11 @@ init() ->
   create_tables(tables()),
   mnesia:stop().
 
-create_tables([]) -> {ok, success};
-
 create_tables([First|Rest]) ->
-  mnesia:create_table(First, [
-	{attributes, record_fields(First)},
-    {disc_copies,[node()]},
-    {type, table_type(First)}
-  ]),
-  create_tables(Rest).
+  mnesia:create_table(First, table_options(First) ++ {disc_copies,[node()]}),
+  create_tables(Rest);
+create_tables([]) -> {ok, success}.
+
 
 reset() ->
   mnesia:stop(),
@@ -58,11 +69,10 @@ write_all(Records) ->
   mnesia:transaction(F),
   {ok, success}.
 
-write_each([]) -> {ok, success};
-
 write_each([First|Rest]) ->
   write(First),
-  write_each(Rest).
+  write_each(Rest);
+write_each([]) -> {ok, success}.
 
 write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
   ItemTableRecord = #item_table{uri=URI, label=Label, properties=Properties},
@@ -79,11 +89,10 @@ write(#property{uri=URI, label=Label, types=Types, properties=Props, ranges=Rang
   write(#item{uri=URI, label=Label, types=Types, properties=Props}),
   store_table_records([#property_table{uri=URI, ranges=Ranges, arity=Arity, inverse=Inverse}]).
 
-store_table_records([]) -> {ok, success};
-
 store_table_records([First|Rest]) ->
   mnesia:write(First),
-  store_table_records(Rest).
+  store_table_records(Rest);
+store_table_records([]) -> {ok, success}.
 
 read_item(URI) ->
   case read(item_table, URI) of
@@ -123,12 +132,3 @@ do(Q) ->
   F = fun() -> qlc:e(Q) end,
   {atomic, Val} = mnesia:transaction(F),
   Val.
-
-record_fields(Record) ->
-  case Record of
-    item_table -> record_info(fields, item_table);
-    item_type_table -> record_info(fields, item_type_table);
-    type_table -> record_info(fields, type_table);
-    type_parent_table -> record_info(fields, type_parent_table);
-    property_table -> record_info(fields, property_table)
-  end.
