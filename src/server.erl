@@ -1,28 +1,35 @@
-%% Author: mirko
-%% Created: Oct 27, 2011
-%% Description: TODO: Add description to server
 -module(server).
 
-%%
-%% Include files
-%%
+-export([start/0, stop/0, loop/1]).
 
-%%
-%% Exported Functions
-%%
--export([start/0, stop/0]).
+-include("../include/records.hrl").
 
-%%
-%% API Functions
-%%
+-define(HTTP_OPTS, [
+            {loop, {?MODULE, loop}},
+            {port, 8080},
+            {name, http_sapiento}
+            ]).
+
 start() ->
-	{ok, started}.
+  {ok, Http} = mochiweb_http:start(?HTTP_OPTS),
+  Http.
 
 stop() ->
-	{ok, stopped}.
+  mochiweb_http:stop(http_routing).
 
+loop(Req) ->
+  Path = Req:get(path),
+  respond(string:tokens(Path, "/"), lists:sort(Req:parse_qs()), Req).
 
-%%
-%% Local Functions
-%%
+respond(["item", ItemURI], _, Req) ->
+  Item = store:read_item(utils:encode(ItemURI)),
+  Json = item2json(Item),
+  Req:ok({"text/plain;charset=utf-8", Json}).
 
+item2json(#item{uri=URI, label=Label, types=Types, properties=Props}) ->
+  mochijson2:encode({struct, [
+    {"uri", URI},
+    {"label", Label},
+    {"types", Types},
+    {"properties", Props}
+  ]}).
