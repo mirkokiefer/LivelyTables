@@ -1,7 +1,7 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([write_all/1, read_item/1, read_type/1, read_property/1]).
+-export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1]).
 
 -include("../include/records.hrl").
 
@@ -30,7 +30,8 @@ create_tables() ->
   mnesia:create_table(item_type_table, [
     {attributes, record_info(fields, item_type_table)},
     {type, bag},
-    {disc_copies,[node()]}
+    {disc_copies,[node()]},
+    {index, [type]}
   ]),
   mnesia:create_table(type_table, [
     {attributes, record_info(fields, type_table)},
@@ -40,7 +41,8 @@ create_tables() ->
   mnesia:create_table(type_parent_table, [
     {attributes, record_info(fields, type_parent_table)},
     {type, bag},
-    {disc_copies,[node()]}
+    {disc_copies,[node()]},
+    {index, [parent]}
   ]),
   mnesia:create_table(property_table, [
     {attributes, record_info(fields, property_table)},
@@ -116,6 +118,11 @@ read_property(URI) ->
       #property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges, arity=Arity, inverse=Inverse};
     undefined -> undefined
   end.
+
+read_items_of_type(TypeURI) ->
+  F = fun() -> mnesia:index_read(item_type_table, TypeURI, #item_type_table.type) end,
+  {atomic, Records} = mnesia:transaction(F),
+  [Item || #item_type_table{item=Item} <- Records].
 
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,
