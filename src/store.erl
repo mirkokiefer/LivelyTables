@@ -15,51 +15,49 @@
 -record(type_parent_table, {type, parent}).
 -record(property_table, {uri, ranges, arity=one, inverse}).
 
-tables() -> [item_table, item_type_table, type_table, type_parent_table, property_table].
-
-table_options(Table) -> 
-  case Table of
-    item_table -> [
-      {attributes, record_info(fields, item_table)},
-      {type, set}
-    ];
-    item_type_table -> [
-      {attributes, record_info(fields, item_type_table)},
-      {type, bag}
-    ];
-    type_table -> [
-      {attributes, record_info(fields, type_table)},
-      {type, set}
-    ];
-    type_parent_table -> [
-      {attributes, record_info(fields, type_parent_table)},
-      {type, set}
-    ];
-    property_table -> [
-      {attributes, record_info(fields, property_table)},
-      {type, set}
-    ]
-  end.
-
 init() ->
   mnesia:create_schema([node()]),
   mnesia:start(),
-  create_tables(tables()),
+  create_tables(),
   mnesia:stop().
 
-create_tables([First|Rest]) ->
-  mnesia:create_table(First, table_options(First) ++ {disc_copies,[node()]}),
-  create_tables(Rest);
-create_tables([]) -> {ok, success}.
-
+create_tables() ->
+  mnesia:create_table(item_table, [
+    {attributes, record_info(fields, item_table)},
+    {type, set},
+    {disc_copies,[node()]}
+  ]),
+  mnesia:create_table(item_type_table, [
+    {attributes, record_info(fields, item_type_table)},
+    {type, bag},
+    {disc_copies,[node()]}
+  ]),
+  mnesia:create_table(type_table, [
+    {attributes, record_info(fields, type_table)},
+    {type, set},
+    {disc_copies,[node()]}
+  ]),
+  mnesia:create_table(type_parent_table, [
+    {attributes, record_info(fields, type_parent_table)},
+    {type, bag},
+    {disc_copies,[node()]}
+  ]),
+  mnesia:create_table(property_table, [
+    {attributes, record_info(fields, property_table)},
+    {type, set},
+    {disc_copies,[node()]}
+  ]).
 
 reset() ->
   mnesia:stop(),
-  mnesia:delete_schema([node()]).
+  mnesia:delete_schema([node()]),
+  init(),
+  start().
 
 start() ->
   mnesia:start(),
-  mnesia:wait_for_tables(tables(), 20000).
+  Tables = [item_table, item_type_table, type_table, type_parent_table, property_table],
+  mnesia:wait_for_tables(Tables, 20000).
 
 stop() ->
   mnesia:stop().
