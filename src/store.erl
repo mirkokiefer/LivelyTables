@@ -1,7 +1,7 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([write_all/1, lookup/2, read_item/1, read_type/1, read_property/1]).
+-export([write_all/1, read_item/1, read_type/1, read_property/1]).
 
 -include("../include/records.hrl").
 
@@ -86,9 +86,9 @@ store_table_records([First|Rest]) ->
   store_table_records(Rest).
 
 read_item(URI) ->
-  case lookup(item_table, URI) of
+  case read(item_table, URI) of
     [#item_table{uri=URI, label=Label, properties=Props}] ->
-      Types = [Type || #item_type_table{type=Type} <- lookup(item_type_table, URI)],
+      Types = [Type || #item_type_table{type=Type} <- read(item_type_table, URI)],
       #item{uri=URI, label=Label, types=Types, properties=Props};
     [] -> undefined
   end.
@@ -96,8 +96,8 @@ read_item(URI) ->
 read_type(URI) ->
   case read_item(URI) of
     #item{uri=URI, label=Label, types=Types, properties=Props} ->
-      [#type_table{legal_properties=LegalProps}] = lookup(type_table, URI),
-      Parents = [Parent || #type_parent_table{parent=Parent} <- lookup(type_parent_table, URI)],
+      [#type_table{legal_properties=LegalProps}] = read(type_table, URI),
+      Parents = [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, URI)],
       #type{uri=URI, label=Label, types=Types, properties=Props, parents=Parents, legal_properties=LegalProps};
     undefined -> undefined
   end.
@@ -105,12 +105,12 @@ read_type(URI) ->
 read_property(URI) ->
   case read_item(URI) of
     #item{uri=URI, label=Label, types=Types, properties=Props} ->
-      [#property_table{ranges=Ranges, arity=Arity, inverse=Inverse}] = lookup(property_table, URI),
+      [#property_table{ranges=Ranges, arity=Arity, inverse=Inverse}] = read(property_table, URI),
       #property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges, arity=Arity, inverse=Inverse};
     undefined -> undefined
   end.
 
-lookup(Table, Key) ->
+read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,
   {atomic, Item} = mnesia:transaction(F),
   Item.
