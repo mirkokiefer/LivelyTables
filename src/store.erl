@@ -1,7 +1,8 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1]).
+-export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
+  read_parents/1, read_subtypes/1]).
 
 -include("../include/records.hrl").
 
@@ -122,12 +123,22 @@ read_property(URI) ->
 read_items_of_type(TypeURI) ->
   F = fun() -> mnesia:index_read(item_type_table, TypeURI, #item_type_table.type) end,
   {atomic, Records} = mnesia:transaction(F),
-  [Item || #item_type_table{item=Item} <- Records].
+  Items = [Item || #item_type_table{item=Item} <- Records],
+  Items ++ lists:flatten([read_items_of_type(Subtype) || Subtype <- read_subtypes(TypeURI)]).
+
+read_parents(TypeURI) ->
+  Records = read(type_parent_table, TypeURI),
+  [Parent || #type_parent_table{parent=Parent} <- Records].
+
+read_subtypes(TypeURI) ->
+  F = fun() -> mnesia:index_read(type_parent_table, TypeURI, #type_parent_table.parent) end,
+  {atomic, Records} = mnesia:transaction(F),
+  [Subtype || #type_parent_table{type=Subtype} <- Records].
 
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,
-  {atomic, Item} = mnesia:transaction(F),
-  Item.
+  {atomic, Result} = mnesia:transaction(F),
+  Result.
 
 query_item(URI) ->
   do(qlc:q([Item || Item=#item{uri=U} <- mnesia:table(item), U==URI])).

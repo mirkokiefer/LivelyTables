@@ -21,23 +21,18 @@ loop(Req) ->
   Path = Req:get(path),
   respond(string:tokens(Path, "/"), lists:sort(Req:parse_qs()), Req).
 
-respond(["item", URI], _, Req) ->
-  Item = store:read_item(utils:encode(URI)),
-  Json = item2json(Item),
-  Req:ok({"text/plain;charset=utf-8", Json});
-
-respond(["type", URI], _, Req) ->
-  Type = store:read_type(utils:encode(URI)),
+respond(["type", TypeID], _, Req) ->
+  Type = store:read_type(utils:encode(TypeID)),
   Json = type2json(Type),
   Req:ok({"text/plain;charset=utf-8", Json});
 
-respond(["type", URI, "_items", "_uri"], _, Req) ->
-  ItemURIs = store:read_items_of_type(utils:encode(URI)),
+respond([TypeID], _, Req) ->
+  ItemURIs = store:read_items_of_type(utils:encode(TypeID)),
   Json = list2json(ItemURIs),
   Req:ok({"text/plain;charset=utf-8", Json});
 
-respond(["type", URI, "_items", "_full"], _, Req) ->
-  ItemURIs = store:read_items_of_type(utils:encode(URI)),
+respond([TypeID, "_full"], _, Req) ->
+  ItemURIs = store:read_items_of_type(utils:encode(TypeID)),
   Items = [store:read_item(ItemURI) || ItemURI <- ItemURIs],
   Json = itemlist2json(Items),
   Req:ok({"text/plain;charset=utf-8", Json});
@@ -45,6 +40,11 @@ respond(["type", URI, "_items", "_full"], _, Req) ->
 respond(["property", URI], _, Req) ->
   Property = store:read_property(utils:encode(URI)),
   Json = property2json(Property),
+  Req:ok({"text/plain;charset=utf-8", Json});
+
+respond([TypeID, ItemID], _, Req) ->
+  Item = store:read_item(utils:encode(ItemID)),
+  Json = item2json(Item),
   Req:ok({"text/plain;charset=utf-8", Json}).
 
 item2json(Item) -> mochijson2:encode(item_struct(Item)).
