@@ -44,10 +44,12 @@ test_types() ->
 
 test_items() ->
   Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
+    {<<"age">>, 30},
     {<<"salary">>, 5000},
     {<<"boss">>, <<"jim">>}
   ]},
-  Jim = #item{uri= <<"jim">>, label= <<"Jim">>, types=[<<"employee">>], properties=[
+  Jim = #item{uri= <<"jim">>, label= <<"Jim">>, types=[<<"manager">>], properties=[
+    {<<"age">>, 40},
     {<<"salary">>, 10000},
     {<<"boss">>, <<"theboss">>},
     {<<"manages">>, [<<"paul">>]}
