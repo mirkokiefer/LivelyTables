@@ -7,7 +7,7 @@
 write(Item, Type) ->
   case validate_item(Item, Type) of
     {true, FinalItem} -> store:write_all([FinalItem]);
-    {false, _} -> {error, requires_properties}
+    {false, _} -> {error, invalid_item}
   end.
 
 read(Item, Type) ->
