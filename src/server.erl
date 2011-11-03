@@ -56,13 +56,27 @@ get([_TypeID, _ItemID, <<"html">>], _, Req) ->
   Path = "../www/",
   Req:serve_file("ui.html", filename:absname(Path));
 
-get([TypeID, ItemID, Attachment], _, Req) ->
+get([_TypeID, _ItemID, Attachment], _, Req) ->
   Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
+
+put([<<"type">>, TypeID], _, Req) ->
+  Term = mochijson2:decode(Req:recv_body()),
+  log(Term),
+  log(utils:json2item(Term)),
+  Type = utils:json2type(Term),
+  log(Type),
+  NewType = Type#type{uri=TypeID},
+  Response = case store_interface:write_type(NewType) of
+    {ok, success} -> json({struct, [{success, true}]});
+    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
+  end,
+  send(Req, Response);
 
 put([TypeID, ItemID], _, Req) ->
   Term = mochijson2:decode(Req:recv_body()),
   Item = utils:json2item(Term),
-  Response = case store_interface:write_item(Item, TypeID) of
+  NewItem = Item#item{uri=ItemID},
+  Response = case store_interface:write_item(NewItem, TypeID) of
     {ok, success} -> json({struct, [{success, true}]});
     {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
   end,

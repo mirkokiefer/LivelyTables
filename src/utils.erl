@@ -1,7 +1,7 @@
 -module(utils).
--export([encode/1, item2type/1, type2item/1,
+-export([log/1, encode/1, item2type/1, type2item/1,
   item2property/1, property2item/1,
-  json/1, json2item/1]).
+  json/1, json2item/1, json2type/1, json2property/1]).
 
 -include("../include/records.hrl").
 
@@ -13,6 +13,7 @@
 -define(ARITY_URI, <<"arity">>).
 -define(INVERSE_URI, <<"inverse">>).
 
+log(Message) -> io:format("~p~n", [Message]).
 
 encode(String) ->
   unicode:characters_to_binary(io_lib:format("~ts", [String])).
@@ -102,14 +103,22 @@ struct(Any) -> Any.
 json2item({struct, Elements}) ->
   parse_item_elements(Elements, #item{}).
 
-parse_item_elements([{Key, Value}|Rest], Item) ->
+json2type({struct, Elements}) ->
+  item2type(parse_item_elements(Elements, #item{})).
+
+json2property({struct, Elements}) ->
+  item2property(parse_item_elements(Elements, #item{})).
+
+parse_item_elements([{Key, Value}|Rest], Item=#item{properties=Properties}) ->
   NewItem = case Key of
     <<"uri">> -> Item#item{uri=Value};
     <<"label">> -> Item#item{label=Value};
     <<"types">> -> Item#item{types=Value};
-    <<"properties">> -> Item#item{properties=parse_properties(Value)}
+    <<"properties">> -> Item#item{properties=Properties++parse_properties(Value)};
+    _ -> Item#item{properties=[{Key, Value}|Properties]}
   end,
   parse_item_elements(Rest, NewItem);
 parse_item_elements([], Item) -> Item.
 
-parse_properties({struct, Properties}) -> Properties.
+parse_properties({struct, Properties}) -> Properties;
+parse_properties([]) -> [].
