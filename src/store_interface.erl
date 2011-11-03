@@ -1,8 +1,20 @@
 -module(store_interface).
 
--export([write/2, read/2, validate_item/2]).
+-export([write/2, read_item/2, read_type/1, read_property/1, validate_item/2]).
 
 -include("../include/records.hrl").
+
+read_item(ItemURI, TypeURI) ->
+  Item = #item{properties=Properties} = store:read_item(ItemURI),
+  ParentTypeURIs = [TypeURI|store:read_parents(TypeURI)],
+  ParentTypes = [store:read_type(URI) || URI <- ParentTypeURIs],
+  LegalProps = lists:flatten([Legal || #type{legal_properties=Legal} <- ParentTypes]),
+  FilteredProps = [Property || Property={URI,_} <- Properties, lists:member(URI, LegalProps)],
+  Item#item{properties=FilteredProps}.
+
+read_type(TypeURI) -> store:read_type(TypeURI).
+
+read_property(PropertyURI) -> store:read_property(PropertyURI).
 
 write(Item=#item{}, Type) ->
   write(Item, Type, fun(FinalItem) -> FinalItem end);
@@ -18,9 +30,6 @@ write(Item, Type, ConversionFun) ->
     {true, FinalItem, _} -> store:write_all([ConversionFun(FinalItem)]);
     {false, _, Errors} -> {error, Errors}
   end.
-
-read(Item, Type) ->
-  {ok, success}.
 
 validate_item(Item=#item{uri=URI}, TypeURI) ->
   MergedItem = case store:read_item(URI) of
@@ -79,8 +88,8 @@ validate_legal_property(LegalProperty, #item{properties=Properties}) ->
 
 validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
   {Valid, Errors} = case {Label, Types} of
-    {undefined, _} -> {false, [{missing, <<"label">>}]};
-    {_, []} -> {false, [{missing, <<"types">>}]};
+    {undefined, _} -> {false, [{missing, ?PROPERTY_LABEL}]};
+    {_, []} -> {false, [{missing, ?PROPERTY_TYPES}]};
     _ -> {true, []}
   end,
   {ValuesValid, ValuesErrors} = validate_property_values(Properties),
@@ -89,7 +98,6 @@ validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
 validate_property_values(Properties) -> validate_property_values(Properties, {true, []}).
 
 validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
-  io:format("~p~n", [PropertyURI]),
   #property{ranges=Ranges, arity=Arity} = store:read_property(PropertyURI),
   Result = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
   {ValidProperty, PropertyErrors} = case Result of
