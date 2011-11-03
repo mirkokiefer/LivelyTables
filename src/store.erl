@@ -2,7 +2,8 @@
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
 -export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
-  read_parents/1, read_direct_parents/1, read_subtypes/1]).
+  read_types_of_item/1, read_direct_types_of_item/1, read_parents/1, read_direct_parents/1,
+  read_subtypes/1]).
 
 -include("../include/records.hrl").
 
@@ -120,6 +121,13 @@ read_property(URI) ->
     undefined -> undefined
   end.
 
+read_direct_types_of_item(ItemURI) ->
+  [Type || #item_type_table{type=Type} <- read(item_type_table, ItemURI)].
+
+read_types_of_item(ItemURI) ->
+  Types = read_direct_types_of_item(ItemURI),
+  Types ++ lists:flatten([read_parents(Type) || Type <- Types]).
+
 read_items_of_type(TypeURI) ->
   F = fun() -> mnesia:index_read(item_type_table, TypeURI, #item_type_table.type) end,
   {atomic, Records} = mnesia:transaction(F),
@@ -133,8 +141,7 @@ read_parents(TypeURI) ->
   end.
 
 read_direct_parents(TypeURI) ->
-  Records = read(type_parent_table, TypeURI),
-  [Parent || #type_parent_table{parent=Parent} <- Records].
+  [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, TypeURI)].
 
 read_subtypes(TypeURI) ->
   F = fun() -> mnesia:index_read(type_parent_table, TypeURI, #type_parent_table.parent) end,
