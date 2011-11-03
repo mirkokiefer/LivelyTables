@@ -4,9 +4,18 @@
 
 -include("../include/records.hrl").
 
-write(Item, Type) ->
+write(Item=#item{}, Type) ->
+  write(Item, Type, fun(FinalItem) -> FinalItem end);
+
+write(Type=#type{}, Type) ->
+  write(utils:type2item(Type), Type, fun(FinalItem) -> utils:item2type(FinalItem) end);
+
+write(Property=#property{}, Type) ->
+  write(utils:property2item(Property), Type, fun(FinalItem) -> utils:item2property(FinalItem) end).
+
+write(Item, Type, ConversionFun) ->
   case validate_item(Item, Type) of
-    {true, FinalItem} -> store:write_all([FinalItem]);
+    {true, FinalItem} -> store:write_all([ConversionFun(FinalItem)]);
     {false, _} -> {error, invalid_item}
   end.
 
@@ -41,14 +50,22 @@ merge_properties(OldProperties, NewProperties) ->
   LeftOutProps = [Prop || Prop <- OldProperties, lists:member(Prop, NewProperties) == false],
   LeftOutProps ++ NewProperties.
 
-validate_type_requirements(#item{label=Label, properties=Properties, types=Types}) ->
-  case Label of
-    undefined -> false;
-    _ ->
-      PropURIs = [URI || {URI, _} <- Properties],
-      ParentTypeURIs = Types ++ lists:flatten([store:read_parents(Type) || Type <- Types]),
-      ParentTypes = [store:read_type(Each) || Each <- ParentTypeURIs],
-      RequiredProps = lists:flatten([Props || #type{legal_properties=Props} <- ParentTypes]),
-      io:format("~p~n", [RequiredProps]),
-      lists:all(fun(Prop) -> lists:member(Prop, PropURIs) end, RequiredProps)
-  end.
+validate_type_requirements(Item=#item{types=Types}) ->
+  ParentTypeURIs = Types ++ lists:flatten([store:read_parents(Type) || Type <- Types]),
+  ParentTypes = [store:read_type(Each) || Each <- ParentTypeURIs],
+  lists:all(fun(#type{legal_properties=LegalProps}) ->
+    validate_properties(LegalProps, Item) end, ParentTypes).
+
+validate_properties([First|Rest], Item) ->
+  validate_property(First, Item) and validate_properties(Rest, Item);
+validate_properties([], _) -> true.
+
+validate_property(<<"label">>, #item{label=Label}) ->
+  Label =/= undefined;
+
+validate_property(<<"types">>, #item{types=Types}) ->
+  length(Types) > 0;
+
+validate_property(LegalProperty, #item{properties=Properties}) ->
+  PropertyURIs = [PropertyURI || {PropertyURI, _} <- Properties],
+  lists:member(LegalProperty, PropertyURIs).
