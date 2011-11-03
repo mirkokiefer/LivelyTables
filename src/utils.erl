@@ -1,7 +1,7 @@
 -module(utils).
 -export([encode/1, item2type/1, type2item/1,
   item2property/1, property2item/1,
-  json/1]).
+  json/1, json2item/1]).
 
 -include("../include/records.hrl").
 
@@ -98,3 +98,18 @@ struct(Property=#property{}) ->
   ]};
 
 struct(Any) -> Any.
+
+json2item({struct, Elements}) ->
+  parse_item_elements(Elements, #item{}).
+
+parse_item_elements([{Key, Value}|Rest], Item) ->
+  NewItem = case Key of
+    <<"uri">> -> Item#item{uri=Value};
+    <<"label">> -> Item#item{label=Value};
+    <<"types">> -> Item#item{types=Value};
+    <<"properties">> -> Item#item{properties=parse_properties(Value)}
+  end,
+  parse_item_elements(Rest, NewItem);
+parse_item_elements([], Item) -> Item.
+
+parse_properties({struct, Properties}) -> Properties.
