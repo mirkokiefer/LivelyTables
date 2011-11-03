@@ -20,42 +20,56 @@ stop() ->
 loop(Req) ->
   Path = Req:get(path),
   Tokens = [utils:encode(Token) || Token <- string:tokens(Path, "/")],
-  respond(Tokens, lists:sort(Req:parse_qs()), Req).
+  Parameters = lists:sort(Req:parse_qs()),
+  case Req:get(method) of
+    'GET' -> get(Tokens, Parameters, Req);
+    'PUT' -> put(Tokens, Parameters, Req)
+  end.
 
-respond([TypeID], _, Req) ->
+get([TypeID], _, Req) ->
   ItemURIs = store:read_items_of_type(TypeID),
   send(Req, utils:json(ItemURIs));
 
-respond([<<"type">>, <<"_full">>], _, Req) ->
+get([<<"type">>, <<"_full">>], _, Req) ->
   TypeURIs = store:read_items_of_type(?TYPE),
   Types = [store_interface:read_type(TypeURI) || TypeURI <- TypeURIs],
   send(Req, utils:json(Types));
 
-respond([TypeID, <<"_full">>], _, Req) ->
+get([TypeID, <<"_full">>], _, Req) ->
   ItemURIs = store:read_items_of_type(TypeID),
   Items = [store_interface:read_item(ItemURI, TypeID) || ItemURI <- ItemURIs],
   send(Req, utils:json(Items));
 
-respond([<<"type">>, TypeID], _, Req) ->
+get([<<"type">>, TypeID], _, Req) ->
   Type = store_interface:read_type(TypeID),
   send(Req, utils:json(Type));
 
-respond([<<"property">>, URI], _, Req) ->
+get([<<"property">>, URI], _, Req) ->
   Property = store_interface:read_property(URI),
   send(Req, utils:json(Property));
 
-respond([TypeID, ItemID], _, Req) ->
+get([TypeID, ItemID], _, Req) ->
   Item = store_interface:read_item(ItemID, TypeID),
   send(Req, utils:json(Item));
 
-respond([_TypeID, _ItemID, <<"html">>], _, Req) ->
+get([_TypeID, _ItemID, <<"html">>], _, Req) ->
   Path = "../www/",
   Req:serve_file("ui.html", filename:absname(Path));
 
-respond([TypeID, ItemID, Attachment], _, Req) ->
-  %Path = string:join(["../www", binary_to_list(TypeID), binary_to_list(ItemID)], "/"),
+get([TypeID, ItemID, Attachment], _, Req) ->
   Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
+
+put([TypeID, ItemID], _, Req) ->
+  Term = mochijson2:decode(Req:recv_body()),
+  Item = utils:json2item(Term),
+  Response = case store_interface:write(Item, TypeID) of
+    {ok, success} -> json({struct, [{success, true}]});
+    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
+  end,
+  send(Req, Response).
 
 log(Message) -> io:format("~p~n", [Message]).
 
 send(Req, Reply) -> Req:ok({"text/plain;charset=utf-8", Reply}).
+
+json(Term) -> mochijson2:encode(Term).
