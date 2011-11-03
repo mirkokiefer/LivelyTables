@@ -15,8 +15,8 @@ write(Property=#property{}, Type) ->
 
 write(Item, Type, ConversionFun) ->
   case validate_item(Item, Type) of
-    {true, FinalItem} -> store:write_all([ConversionFun(FinalItem)]);
-    {false, _} -> {error, invalid_item}
+    {true, FinalItem, _} -> store:write_all([ConversionFun(FinalItem)]);
+    {false, _, Errors} -> {error, Errors}
   end.
 
 read(Item, Type) ->
@@ -27,7 +27,9 @@ validate_item(Item=#item{uri=URI}, TypeURI) ->
     undefined -> Item;
     OldItem -> merge_items(OldItem, Item, TypeURI)
   end,
-  {validate_type_requirements(MergedItem) and validate_properties(MergedItem), MergedItem}.
+  {ValidType, TypeErrors} = validate_type_requirements(MergedItem),
+  {ValidProperties, PropertyErrors} = validate_properties(MergedItem),
+  {ValidType and ValidProperties, MergedItem, TypeErrors++PropertyErrors}.
 
 merge_items(OldItem, NewItem, NewType) ->
   #item{label=OldLabel, types=OldTypes, properties=OldProperties} = OldItem,
@@ -54,34 +56,48 @@ merge_properties(OldProperties, NewProperties) ->
 validate_type_requirements(Item=#item{types=Types}) ->
   ParentTypeURIs = Types ++ lists:flatten([store:read_parents(Type) || Type <- Types]),
   ParentTypes = [store:read_type(Each) || Each <- ParentTypeURIs],
-  lists:all(fun(#type{legal_properties=LegalProps}) ->
-    validate_properties(LegalProps, Item) end, ParentTypes).
+  Results = [validate_legal_properties(LegalProps, Item) || #type{legal_properties=LegalProps} <- ParentTypes],
+  sum_result(Results).
 
-validate_properties([First|Rest], Item) ->
-  validate_property(First, Item) and validate_properties(Rest, Item);
-validate_properties([], _) -> true.
+validate_legal_properties(Properties, Item) -> validate_legal_properties(Properties, Item, {true, []}).
 
-validate_property(?PROPERTY_LABEL, #item{}) -> true;
+validate_legal_properties([First|Rest], Item, {SumValid, SumErrors}) ->
+  {Valid, Errors} = validate_legal_property(First, Item),
+  validate_legal_properties(Rest, Item, {SumValid and Valid, Errors++SumErrors});
+validate_legal_properties([], _, Result) -> Result.
 
-validate_property(?PROPERTY_TYPES, #item{}) -> true;
+validate_legal_property(?PROPERTY_LABEL, #item{}) -> {true, []};
 
-validate_property(LegalProperty, #item{properties=Properties}) ->
+validate_legal_property(?PROPERTY_TYPES, #item{}) -> {true, []};
+
+validate_legal_property(LegalProperty, #item{properties=Properties}) ->
   PropertyURIs = [PropertyURI || {PropertyURI, _} <- Properties],
-  lists:member(LegalProperty, PropertyURIs).
-
-validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
-  case {Label, Types} of
-    {undefined, _} -> false;
-    {_, []} -> false;
-    _ -> validate_property_values(Properties)
+  case lists:member(LegalProperty, PropertyURIs) of
+    true -> {true, []};
+    false -> {false, [{missing, LegalProperty}]}
   end.
 
-validate_property_values([{PropertyURI, Value}|Rest]) ->
+validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
+  {Valid, Errors} = case {Label, Types} of
+    {undefined, _} -> {false, [{missing, <<"label">>}]};
+    {_, []} -> {false, [{missing, <<"types">>}]};
+    _ -> {true, []}
+  end,
+  {ValuesValid, ValuesErrors} = validate_property_values(Properties),
+  {Valid and ValuesValid, Errors ++ ValuesErrors}.
+
+validate_property_values(Properties) -> validate_property_values(Properties, {true, []}).
+
+validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
   io:format("~p~n", [PropertyURI]),
   #property{ranges=Ranges, arity=Arity} = store:read_property(PropertyURI),
-  lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges) and
-    validate_property_values(Rest);
-validate_property_values([]) -> true.
+  Result = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
+  {ValidProperty, PropertyErrors} = case Result of
+    true -> {true, []};
+    false -> {false, [{invalid_property, {ranges, Ranges}, {property, PropertyURI}, {value, Value}}]}
+  end,
+  validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});
+validate_property_values([], Result) -> Result.
 
 validate_property_range(Range, ?ARITY_MANY, Values) ->
   lists:all(fun(Value) -> validate_property_range(Range, ?ARITY_ONE, Value) end, Values);
@@ -94,3 +110,9 @@ validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> is_boolean
 
 validate_property_range(Range, ?ARITY_ONE, Value) ->
   lists:member(Range, store:read_types_of_item(Value)).
+
+sum_result(Result) -> sum_result(Result, {true, []}).
+  
+sum_result([{Valid, Errors}|Rest], {SumValid, SumErrors}) ->
+  sum_result(Rest, {SumValid and Valid, Errors ++ SumErrors});
+sum_result([], SumResult) -> SumResult.
