@@ -83,13 +83,13 @@ validate_legal_property(LegalProperty, #item{properties=Properties}) ->
   PropertyURIs = [PropertyURI || {PropertyURI, _} <- Properties],
   case lists:member(LegalProperty, PropertyURIs) of
     true -> {true, []};
-    false -> {false, [{missing, LegalProperty}]}
+    false -> {false, legal_property_missing(LegalProperty)}
   end.
 
 validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
   {Valid, Errors} = case {Label, Types} of
-    {undefined, _} -> {false, [{missing, ?PROPERTY_LABEL}]};
-    {_, []} -> {false, [{missing, ?PROPERTY_TYPES}]};
+    {undefined, _} -> {false, legal_property_missing(?PROPERTY_LABEL)};
+    {_, []} -> {false, legal_property_missing(?PROPERTY_TYPES)};
     _ -> {true, []}
   end,
   {ValuesValid, ValuesErrors} = validate_property_values(Properties),
@@ -102,7 +102,7 @@ validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
   Result = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
   {ValidProperty, PropertyErrors} = case Result of
     true -> {true, []};
-    false -> {false, [{invalid_property, {ranges, Ranges}, {property, PropertyURI}, {value, Value}}]}
+    false -> {false, invalid_property_value(PropertyURI, Ranges, Value)}
   end,
   validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});
 validate_property_values([], Result) -> Result.
@@ -124,3 +124,9 @@ sum_result(Result) -> sum_result(Result, {true, []}).
 sum_result([{Valid, Errors}|Rest], {SumValid, SumErrors}) ->
   sum_result(Rest, {SumValid and Valid, Errors ++ SumErrors});
 sum_result([], SumResult) -> SumResult.
+
+%Error messages
+legal_property_missing(LegalProperty) -> [[{message, <<"Property missing">>}, {value, LegalProperty}]].
+
+invalid_property_value(Property, Range, Value) ->
+  [[{message, <<"Invalid property value">>}, {range, Range}, {property,Property}, {value, Value}]].
