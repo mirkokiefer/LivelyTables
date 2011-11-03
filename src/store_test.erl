@@ -35,12 +35,20 @@ test_property_read() ->
   First = store:read_property(First#property.uri).
 
 test_types() ->
+  Item = #type{uri= <<"item">>, label= <<"Item">>, parents=[], legal_properties=[
+    <<"label">>,
+    <<"types">>
+  ]},
+  Type = #type{uri= <<"type">>, label= <<"Type">>, parents= [<<"item">>], legal_properties=[
+    <<"legal_properties">>,
+    <<"parents">>
+  ]},
   Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
   Employee = #type{uri= <<"employee">>, label= <<"Employee">>, parents=[<<"person">>],
     legal_properties=[<<"salary">>, <<"boss">>]},
   Manager = #type{uri= <<"manager">>, label= <<"Manager">>, parents=[<<"employee">>],
     legal_properties=[<<"manages">>]},
-  [Person, Employee, Manager].
+  [Item, Type, Person, Employee, Manager].
 
 test_items() ->
   Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[

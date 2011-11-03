@@ -2,7 +2,7 @@
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
 -export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
-  read_parents/1, read_subtypes/1]).
+  read_parents/1, read_direct_parents/1, read_subtypes/1]).
 
 -include("../include/records.hrl").
 
@@ -127,6 +127,12 @@ read_items_of_type(TypeURI) ->
   Items ++ lists:flatten([read_items_of_type(Subtype) || Subtype <- read_subtypes(TypeURI)]).
 
 read_parents(TypeURI) ->
+  case read_direct_parents(TypeURI) of
+    [] -> [];
+    Parents -> Parents ++ lists:flatten([read_parents(Parent) || Parent <- Parents])
+  end.
+
+read_direct_parents(TypeURI) ->
   Records = read(type_parent_table, TypeURI),
   [Parent || #type_parent_table{parent=Parent} <- Records].
 
