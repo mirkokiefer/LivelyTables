@@ -46,7 +46,15 @@ respond([<<"property">>, URI], _, Req) ->
 
 respond([TypeID, ItemID], _, Req) ->
   Item = store_interface:read_item(ItemID, TypeID),
-  send(Req, utils:json(Item)).
+  send(Req, utils:json(Item));
+
+respond([_TypeID, _ItemID, <<"html">>], _, Req) ->
+  Path = "../www/",
+  Req:serve_file("ui.html", filename:absname(Path));
+
+respond([TypeID, ItemID, Attachment], _, Req) ->
+  %Path = string:join(["../www", binary_to_list(TypeID), binary_to_list(ItemID)], "/"),
+  Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
 
 log(Message) -> io:format("~p~n", [Message]).
 
