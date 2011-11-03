@@ -1,6 +1,6 @@
 -module(store_test).
 
--export([test/0]).
+-export([test/0, bad_item/0]).
 
 -include("../include/records.hrl").
 
@@ -94,3 +94,10 @@ core_properties() ->
   Arity = #property{uri=?PROPERTY_ARITY, label= <<"Arity">>, ranges=[?PROPERTY_TYPE_STRING]},
   Inverse = #property{uri=?PROPERTY_INVERSE, label= <<"Inverse">>, ranges=[?PROPERTY]},
   [Label, Types, Parents, Ranges, Arity, Inverse].
+
+bad_item() ->
+  #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
+    {<<"age">>, <<"40">>},
+    {<<"salary">>, 5000},
+    {<<"boss">>, <<"jim">>}
+  ]}.
