@@ -27,7 +27,7 @@ validate_item(Item=#item{uri=URI}, TypeURI) ->
     undefined -> Item;
     OldItem -> merge_items(OldItem, Item, TypeURI)
   end,
-  {validate_type_requirements(MergedItem), MergedItem}.
+  {validate_type_requirements(MergedItem) and validate_properties(MergedItem), MergedItem}.
 
 merge_items(OldItem, NewItem, NewType) ->
   #item{label=OldLabel, types=OldTypes, properties=OldProperties} = OldItem,
@@ -47,7 +47,8 @@ merge_items(OldItem, NewItem, NewType) ->
   NewItem#item{label=MergedLabel, types=MergedTypes, properties=MergedProperties}.
 
 merge_properties(OldProperties, NewProperties) ->
-  LeftOutProps = [Prop || Prop <- OldProperties, lists:member(Prop, NewProperties) == false],
+  NewPropertyURIs = [URI || {URI, _} <- NewProperties],
+  LeftOutProps = [Prop || Prop={URI,_} <- OldProperties, lists:member(URI, NewPropertyURIs) == false],
   LeftOutProps ++ NewProperties.
 
 validate_type_requirements(Item=#item{types=Types}) ->
@@ -60,12 +61,36 @@ validate_properties([First|Rest], Item) ->
   validate_property(First, Item) and validate_properties(Rest, Item);
 validate_properties([], _) -> true.
 
-validate_property(<<"label">>, #item{label=Label}) ->
-  Label =/= undefined;
+validate_property(?PROPERTY_LABEL, #item{}) -> true;
 
-validate_property(<<"types">>, #item{types=Types}) ->
-  length(Types) > 0;
+validate_property(?PROPERTY_TYPES, #item{}) -> true;
 
 validate_property(LegalProperty, #item{properties=Properties}) ->
   PropertyURIs = [PropertyURI || {PropertyURI, _} <- Properties],
   lists:member(LegalProperty, PropertyURIs).
+
+validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
+  case {Label, Types} of
+    {undefined, _} -> false;
+    {_, []} -> false;
+    _ -> validate_property_values(Properties)
+  end.
+
+validate_property_values([{PropertyURI, Value}|Rest]) ->
+  io:format("~p~n", [PropertyURI]),
+  #property{ranges=Ranges, arity=Arity} = store:read_property(PropertyURI),
+  lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges) and
+    validate_property_values(Rest);
+validate_property_values([]) -> true.
+
+validate_property_range(Range, ?ARITY_MANY, Values) ->
+  lists:all(fun(Value) -> validate_property_range(Range, ?ARITY_ONE, Value) end, Values);
+
+validate_property_range(?PROPERTY_TYPE_STRING, ?ARITY_ONE, Value) -> is_bitstring(Value);
+
+validate_property_range(?PROPERTY_TYPE_NUMBER, ?ARITY_ONE, Value) -> is_number(Value);
+
+validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> is_boolean(Value);
+
+validate_property_range(Range, ?ARITY_ONE, Value) ->
+  lists:member(Range, store:read_types_of_item(Value)).
