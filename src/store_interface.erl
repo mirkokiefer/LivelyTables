@@ -1,6 +1,6 @@
 -module(store_interface).
 
--export([write/2, read_item/2, read_type/1, read_property/1, validate_item/2]).
+-export([write_item/2, write_type/1, write_property/1, read_item/2, read_type/1, read_property/1, validate_item/2]).
 
 -include("../include/records.hrl").
 
@@ -16,14 +16,14 @@ read_type(TypeURI) -> store:read_type(TypeURI).
 
 read_property(PropertyURI) -> store:read_property(PropertyURI).
 
-write(Item=#item{}, Type) ->
-  write(Item, Type, fun(FinalItem) -> FinalItem end);
+write_item(Item, Type) ->
+  write(Item, Type, fun(FinalItem) -> FinalItem end).
 
-write(Type=#type{}, Type) ->
-  write(utils:type2item(Type), Type, fun(FinalItem) -> utils:item2type(FinalItem) end);
+write_type(Type) ->
+  write(utils:type2item(Type), ?TYPE, fun(FinalItem) -> utils:item2type(FinalItem) end).
 
-write(Property=#property{}, Type) ->
-  write(utils:property2item(Property), Type, fun(FinalItem) -> utils:item2property(FinalItem) end).
+write_property(Property) ->
+  write(utils:property2item(Property), ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
 
 write(Item, Type, ConversionFun) ->
   case validate_item(Item, Type) of

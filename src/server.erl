@@ -62,7 +62,7 @@ get([TypeID, ItemID, Attachment], _, Req) ->
 put([TypeID, ItemID], _, Req) ->
   Term = mochijson2:decode(Req:recv_body()),
   Item = utils:json2item(Term),
-  Response = case store_interface:write(Item, TypeID) of
+  Response = case store_interface:write_item(Item, TypeID) of
     {ok, success} -> json({struct, [{success, true}]});
     {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
   end,
