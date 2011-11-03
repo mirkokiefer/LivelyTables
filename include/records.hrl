@@ -13,6 +13,7 @@
 -define(PROPERTY, <<"property">>).
 
 % Core Properties
+-define(URI, <<"uri">>).
 -define(PROPERTY_LABEL, <<"label">>).
 -define(PROPERTY_TYPES, <<"types">>).
 -define(PROPERTY_LEGALPROPERTIES, <<"legal_properties">>).

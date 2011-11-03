@@ -1,6 +1,7 @@
 -module(utils).
 -export([encode/1, item2type/1, type2item/1,
-  item2property/1, property2item/1]).
+  item2property/1, property2item/1,
+  json/1]).
 
 -include("../include/records.hrl").
 
@@ -55,3 +56,45 @@ property2item(Property) ->
       {?INVERSE_URI, Property#property.inverse}
     ] ++ Property#property.properties
   }.
+
+json([]) -> mochijson2:encode([]);
+
+json([First|Rest]) ->
+  mochijson2:encode(json([First|Rest], []));
+
+json(Element) -> mochijson2:encode(struct(Element)).
+
+json([First|Rest], Structs) ->
+  json(Rest, [struct(First)|Structs]);
+json([], Structs) -> Structs.
+
+struct(Item=#item{}) ->
+  {struct, [
+    {?URI, Item#item.uri},
+    {?PROPERTY_LABEL, Item#item.label},
+    {?PROPERTY_TYPES, Item#item.types},
+    {"properties", Item#item.properties}
+  ]};
+
+struct(Type=#type{}) ->
+  {struct, [
+    {?URI, Type#type.uri},
+    {?PROPERTY_LABEL, Type#type.label},
+    {?PROPERTY_TYPES, Type#type.types},
+    {?PROPERTY_PARENTS, Type#type.parents},
+    {"properties", Type#type.properties},
+    {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
+  ]};
+
+struct(Property=#property{}) ->
+  {struct, [
+    {?URI, Property#property.uri},
+    {?PROPERTY_LABEL, Property#property.label},
+    {?PROPERTY_TYPES, Property#property.types},
+    {"properties", Property#property.properties},
+    {?PROPERTY_RANGES, Property#property.ranges},
+    {?PROPERTY_ARITY, Property#property.arity},
+    {?PROPERTY_INVERSE, Property#property.inverse}
+  ]};
+
+struct(Any) -> Any.

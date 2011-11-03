@@ -22,68 +22,25 @@ loop(Req) ->
   respond(string:tokens(Path, "/"), lists:sort(Req:parse_qs()), Req).
 
 respond(["type", TypeID], _, Req) ->
-  Type = store:read_type(utils:encode(TypeID)),
-  Json = type2json(Type),
-  Req:ok({"text/plain;charset=utf-8", Json});
+  Type = store_interface:read_type(utils:encode(TypeID)),
+  Req:ok({"text/plain;charset=utf-8", utils:json(Type)});
 
 respond([TypeID], _, Req) ->
   ItemURIs = store:read_items_of_type(utils:encode(TypeID)),
-  Json = list2json(ItemURIs),
-  Req:ok({"text/plain;charset=utf-8", Json});
+  Req:ok({"text/plain;charset=utf-8", utils:json(ItemURIs)});
 
 respond([TypeID, "_full"], _, Req) ->
+  io:format("~p~n", [TypeID]),
   ItemURIs = store:read_items_of_type(utils:encode(TypeID)),
-  Items = [store:read_item(ItemURI) || ItemURI <- ItemURIs],
-  Json = itemlist2json(Items),
-  Req:ok({"text/plain;charset=utf-8", Json});
+  io:format("~p~n", [ItemURIs]),
+  Items = [store_interface:read_item(ItemURI, utils:encode(TypeID)) || ItemURI <- ItemURIs],
+  Req:ok({"text/plain;charset=utf-8", utils:json(Items)});
 
 respond(["property", URI], _, Req) ->
-  Property = store:read_property(utils:encode(URI)),
-  Json = property2json(Property),
-  Req:ok({"text/plain;charset=utf-8", Json});
+  Property = store_interface:read_property(utils:encode(URI)),
+  Req:ok({"text/plain;charset=utf-8", utils:json(Property)});
 
 respond([TypeID, ItemID], _, Req) ->
-  Item = store:read_item(utils:encode(ItemID)),
-  Json = item2json(Item),
-  Req:ok({"text/plain;charset=utf-8", Json}).
-
-item2json(Item) -> mochijson2:encode(item_struct(Item)).
-
-type2json(Type) -> mochijson2:encode(type_struct(Type)).
-
-property2json(Property) -> mochijson2:encode(property_struct(Property)).
-
-list2json(URIs) -> mochijson2:encode(URIs).
-
-itemlist2json(Items) ->
-  ItemStructs = [item_struct(Item) || Item <- Items],
-  mochijson2:encode(ItemStructs).
-
-item_struct(Item) ->
-  {struct, [
-    {"uri", Item#item.uri},
-    {"label", Item#item.label},
-    {"types", Item#item.types},
-    {"properties", Item#item.properties}
-  ]}.
-
-type_struct(Type) ->
-  {struct, [
-    {"uri", Type#type.uri},
-    {"label", Type#type.label},
-    {"types", Type#type.types},
-    {"parents", Type#type.parents},
-    {"properties", Type#type.properties},
-    {"legal_properties", Type#type.legal_properties}
-  ]}.
-
-property_struct(Property) ->
-  {struct, [
-    {"uri", Property#property.uri},
-    {"label", Property#property.label},
-    {"types", Property#property.types},
-    {"properties", Property#property.properties},
-    {"ranges", Property#property.ranges},
-    {"arity", Property#property.arity},
-    {"inverse", Property#property.inverse}
-  ]}.
+  Item = store_interface:read_item(utils:encode(ItemID), utils:encode(TypeID)),
+  io:format("~p~n", [Item]),
+  Req:ok({"text/plain;charset=utf-8", utils:json(Item)}).
