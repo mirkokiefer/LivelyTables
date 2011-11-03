@@ -15,17 +15,19 @@ $(function() {
       $('#properties').append(property + ': ' + item.properties[property] + '<br>');
     }
   });
-  testPut("mike", sampleItem());
-  testPut("john", badItem());
+  testPut("mike", "employee", sampleItem());
+  testPut("john", "employee", badItem());
+  testPut("manager1", "type", sampleType());
+  testPut("manager2", "type", badType());
 });
 
-var testPut = function(id, item) {
+var testPut = function(id, type, item) {
   $.ajax({
         type: 'PUT',
         async: true,
         data: JSON.stringify(item),
         contentType: 'application/json',
-        url: "/employee/" + id,
+        url: "/" + type + "/" + id,
         success: function(jsonData) {
           console.log(jsonData);
         }
@@ -34,7 +36,6 @@ var testPut = function(id, item) {
 
 var sampleItem = function() {
   var item = {
-    "uri":"mike",
     "label":"Mike",
     "types":["employee"],
     "properties": {
@@ -48,7 +49,6 @@ var sampleItem = function() {
 
 var badItem = function() {
   var item = {
-    "uri":"john",
     "label":"John",
     "types":["employee"],
     "properties": {
@@ -56,4 +56,24 @@ var badItem = function() {
     }
   };
   return item;
+}
+
+var sampleType = function() {
+  var type = {
+    "label":"Manager",
+    "types":["type"],
+    "parents":["employee"],
+    "properties":[],
+    "legal_properties":["manages"]
+  };
+  return type;
+}
+
+var badType = function() {
+  var type = {
+    "types":["type"],
+    "parents":["employee"],
+    "jklproprties":[]
+  };
+  return type;
 }
