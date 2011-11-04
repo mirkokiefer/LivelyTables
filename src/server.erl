@@ -61,12 +61,20 @@ get([_TypeID, _ItemID, Attachment], _, Req) ->
 
 put([<<"type">>, TypeID], _, Req) ->
   Term = mochijson2:decode(Req:recv_body()),
-  log(Term),
-  log(utils:json2item(Term)),
   Type = utils:json2type(Term),
-  log(Type),
   NewType = Type#type{uri=TypeID},
   Response = case store_interface:write_type(NewType) of
+    {ok, success} -> json({struct, [{success, true}]});
+    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
+  end,
+  send(Req, Response);
+
+put([<<"property">>, PropertyID], _, Req) ->
+  Term = mochijson2:decode(Req:recv_body()),
+  Property = utils:json2property(Term),
+  NewProperty = Property#property{uri=PropertyID},
+  log(NewProperty),
+  Response = case store_interface:write_property(NewProperty) of
     {ok, success} -> json({struct, [{success, true}]});
     {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
   end,
