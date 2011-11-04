@@ -10,9 +10,9 @@ $(function() {
     var item = JSON.parse(result);
     console.log(result);
     $('#label').text(item.label);
-    $('#types').text(item.types.join('<br>'));
-    for(var property in item.properties) {
-      $('#properties').append(property + ': ' + item.properties[property] + '<br>');
+    delete item["label"];
+    for(var property in item) {
+      $('#properties').append(property + ': ' + item[property] + '<br>');
     }
   });
   testPut("mike", "employee", sampleItem());
@@ -38,11 +38,9 @@ var testPut = function(id, type, item) {
 var sampleItem = function() {
   var item = {
     "label":"Mike",
-    "properties": {
-      "age":40,
-      "salary":2000,
-      "boss":"jim"
-    }
+    "age":40,
+    "salary":2000,
+    "boss":"jim"
   };
   return item;
 };
@@ -50,9 +48,7 @@ var sampleItem = function() {
 var badItem = function() {
   var item = {
     "label":"John",
-    "properties": {
-      "age":"40"
-    }
+    "age":"40"
   };
   return item;
 }
@@ -61,7 +57,6 @@ var sampleType = function() {
   var type = {
     "label":"Manager",
     "parents":["employee"],
-    "properties":[],
     "legal_properties":["manages"]
   };
   return type;
@@ -78,7 +73,6 @@ var badType = function() {
 var sampleProperty = function() {
   var property = {
     "label":"Owns",
-    "properties":[],
     "ranges":["item"],
     "arity":"many"
   };

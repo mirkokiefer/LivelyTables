@@ -74,9 +74,8 @@ struct(Item=#item{}) ->
   {struct, [
     {?URI, Item#item.uri},
     {?PROPERTY_LABEL, Item#item.label},
-    {?PROPERTY_TYPES, Item#item.types},
-    {"properties", Item#item.properties}
-  ]};
+    {?PROPERTY_TYPES, Item#item.types}
+  ] ++ Item#item.properties};
 
 struct(Type=#type{}) ->
   {struct, [
@@ -84,20 +83,18 @@ struct(Type=#type{}) ->
     {?PROPERTY_LABEL, Type#type.label},
     {?PROPERTY_TYPES, Type#type.types},
     {?PROPERTY_PARENTS, Type#type.parents},
-    {"properties", Type#type.properties},
     {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
-  ]};
+  ] ++ Type#type.properties};
 
 struct(Property=#property{}) ->
   Properties =[
     {?URI, Property#property.uri},
     {?PROPERTY_LABEL, Property#property.label},
     {?PROPERTY_TYPES, Property#property.types},
-    {"properties", Property#property.properties},
     {?PROPERTY_RANGES, Property#property.ranges},
     {?PROPERTY_ARITY, Property#property.arity},
     {?PROPERTY_OPTIONAL, Property#property.optional}
-  ],
+  ] ++ Property#property.properties,
   NewProperties = case Property#property.inverse of
     undefined -> Properties;
     Value -> Properties ++ [{?PROPERTY_INVERSE, Value}]
@@ -120,11 +117,7 @@ parse_item_elements([{Key, Value}|Rest], Item=#item{properties=Properties}) ->
     <<"uri">> -> Item#item{uri=Value};
     <<"label">> -> Item#item{label=Value};
     <<"types">> -> Item#item{types=Value};
-    <<"properties">> -> Item#item{properties=Properties++parse_properties(Value)};
     _ -> Item#item{properties=[{Key, Value}|Properties]}
   end,
   parse_item_elements(Rest, NewItem);
 parse_item_elements([], Item) -> Item.
-
-parse_properties({struct, Properties}) -> Properties;
-parse_properties([]) -> [].
