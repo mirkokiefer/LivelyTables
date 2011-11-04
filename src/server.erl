@@ -18,12 +18,11 @@ stop() ->
   mochiweb_http:stop(http_routing).
 
 loop(Req) ->
-  Path = Req:get(path),
-  Tokens = [utils:encode(Token) || Token <- string:tokens(Path, "/")],
+  Tokens = [utils:encode(Token) || Token <- string:tokens(Req:get(path), "/")],
   Parameters = lists:sort(Req:parse_qs()),
   case Req:get(method) of
     'GET' -> get(Tokens, Parameters, Req);
-    'PUT' -> put(Tokens, Parameters, Req)
+    'PUT' -> put(Tokens, Parameters, mochijson2:decode(Req:recv_body()), Req)
   end.
 
 get([TypeID], _, Req) ->
@@ -59,38 +58,26 @@ get([_TypeID, _ItemID, <<"html">>], _, Req) ->
 get([_TypeID, _ItemID, Attachment], _, Req) ->
   Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
 
-put([<<"type">>, TypeID], _, Req) ->
-  Term = mochijson2:decode(Req:recv_body()),
-  Type = utils:json2type(Term),
+put([<<"type">>, TypeID], _, Body, Req) ->
+  Type = utils:json2type(Body),
   NewType = Type#type{uri=TypeID},
-  Response = case store_interface:write_type(NewType) of
-    {ok, success} -> json({struct, [{success, true}]});
-    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
-  end,
+  Response = valid2json(store_interface:write_type(NewType)),
   send(Req, Response);
 
-put([<<"property">>, PropertyID], _, Req) ->
-  Term = mochijson2:decode(Req:recv_body()),
-  Property = utils:json2property(Term),
+put([<<"property">>, PropertyID], _, Body, Req) ->
+  Property = utils:json2property(Body),
   NewProperty = Property#property{uri=PropertyID},
-  log(NewProperty),
-  Response = case store_interface:write_property(NewProperty) of
-    {ok, success} -> json({struct, [{success, true}]});
-    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
-  end,
+  Response = valid2json(store_interface:write_property(NewProperty)),
   send(Req, Response);
 
-put([TypeID, ItemID], _, Req) ->
-  Term = mochijson2:decode(Req:recv_body()),
-  Item = utils:json2item(Term),
+put([TypeID, ItemID], _, Body, Req) ->
+  Item = utils:json2item(Body),
   NewItem = Item#item{uri=ItemID},
-  Response = case store_interface:write_item(NewItem, TypeID) of
-    {ok, success} -> json({struct, [{success, true}]});
-    {error, Errors} -> json({struct, [{success, false}, {errors,Errors}]})
-  end,
+  Response = valid2json(store_interface:write_item(NewItem, TypeID)),
   send(Req, Response).
 
-log(Message) -> io:format("~p~n", [Message]).
+valid2json({ok, success}) -> json({struct, [{success, true}]});
+valid2json({error, Errors}) -> json({struct, [{success, false}, {errors,Errors}]}).
 
 send(Req, Reply) -> Req:ok({"text/plain;charset=utf-8", Reply}).
 
