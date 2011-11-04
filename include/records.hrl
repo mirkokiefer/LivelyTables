@@ -20,8 +20,10 @@
 -define(PROPERTY_PARENTS, <<"parents">>).
 -define(PROPERTY_RANGES, <<"ranges">>).
 -define(PROPERTY_ARITY, <<"arity">>).
+-define(PROPERTY_OPTIONAL, <<"optional">>).
 -define(PROPERTY_INVERSE, <<"inverse">>).
 
 -record(item, {uri, label, types=[], properties=[]}).
 -record(type, {uri, label, types=[?TYPE], properties=[], parents=[?ITEM], legal_properties=[]}).
--record(property, {uri, label, types=[?PROPERTY], properties=[], ranges=[?ITEM], arity=?ARITY_ONE, inverse}).
+-record(property, {uri, label, types=[?PROPERTY], properties=[], ranges=[?ITEM], arity=?ARITY_ONE,
+  inverse, optional=false}).

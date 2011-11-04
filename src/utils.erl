@@ -5,26 +5,18 @@
 
 -include("../include/records.hrl").
 
--define(LABEL_URI, <<"label">>).
--define(TYPES_URI, <<"types">>).
--define(PARENTS_URI, <<"parents">>).
--define(LEGALPROPERTIES_URI, <<"legal_properties">>).
--define(RANGES_URI, <<"ranges">>).
--define(ARITY_URI, <<"arity">>).
--define(INVERSE_URI, <<"inverse">>).
-
 log(Message) -> io:format("~p~n", [Message]).
 
 encode(String) ->
   unicode:characters_to_binary(io_lib:format("~ts", [String])).
 
-item2type(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
-  item2type(Properties, #type{uri=URI, label=Label, types=Types}).
+item2type(#item{uri=URI, label=Label, properties=Properties}) ->
+  item2type(Properties, #type{uri=URI, label=Label}).
 
 item2type([{PropertyURI, Value}|Rest], Type=#type{properties=Properties}) ->
   NewType = case PropertyURI of
-    ?PARENTS_URI -> Type#type{parents=Value};
-    ?LEGALPROPERTIES_URI -> Type#type{legal_properties=Value};
+    ?PROPERTY_PARENTS -> Type#type{parents=Value};
+    ?PROPERTY_LEGALPROPERTIES -> Type#type{legal_properties=Value};
     _ -> Type#type{properties=[{PropertyURI, Value}|Properties]}
   end,
   item2type(Rest, NewType);
@@ -32,31 +24,37 @@ item2type([], Type) -> Type.
 
 type2item(Type) ->
   #item{uri=Type#type.uri, label=Type#type.label, types=Type#type.types, properties=[
-    {?PARENTS_URI, Type#type.parents},
-    {?LEGALPROPERTIES_URI, Type#type.legal_properties}
+    {?PROPERTY_PARENTS, Type#type.parents},
+    {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
   ] ++ Type#type.properties}.
 
-item2property(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
-  item2property(Properties, #property{uri=URI, label=Label, types=Types}).
+item2property(#item{uri=URI, label=Label, properties=Properties}) ->
+  item2property(Properties, #property{uri=URI, label=Label}).
 
 item2property([{PropertyURI, Value}|Rest], Property=#property{properties=Properties}) ->
   NewProperty = case PropertyURI of
-    ?RANGES_URI -> Property#property{ranges=Value};
-    ?ARITY_URI -> Property#property{arity=Value};
-    ?INVERSE_URI -> Property#property{inverse=Value};
+    ?PROPERTY_RANGES -> Property#property{ranges=Value};
+    ?PROPERTY_ARITY -> Property#property{arity=Value};
+    ?PROPERTY_INVERSE -> Property#property{inverse=Value};
+    ?PROPERTY_OPTIONAL -> Property#property{optional=Value};
     _ -> Property#property{properties=[{PropertyURI, Value}|Properties]}
   end,
   item2property(Rest, NewProperty);
 item2property([], Property) -> Property.
 
 property2item(Property) ->
-  #item{uri=Property#property.uri, label=Property#property.label, types=Property#property.types,
+  Item=#item{uri=Property#property.uri, label=Property#property.label, types=Property#property.types,
     properties=[
-      {?RANGES_URI, Property#property.ranges},
-      {?ARITY_URI, Property#property.arity},
-      {?INVERSE_URI, Property#property.inverse}
+      {?PROPERTY_RANGES, Property#property.ranges},
+      {?PROPERTY_ARITY, Property#property.arity},
+      {?PROPERTY_OPTIONAL, Property#property.optional}
     ] ++ Property#property.properties
-  }.
+  },
+  #item{properties=Properties}=Item,
+  case Property#property.inverse of
+    undefined -> Item;
+    Value -> Item#item{properties=[{?PROPERTY_INVERSE, Value}|Properties]}
+  end.
 
 json([]) -> mochijson2:encode([]);
 
@@ -95,7 +93,8 @@ struct(Property=#property{}) ->
     {"properties", Property#property.properties},
     {?PROPERTY_RANGES, Property#property.ranges},
     {?PROPERTY_ARITY, Property#property.arity},
-    {?PROPERTY_INVERSE, Property#property.inverse}
+    {?PROPERTY_INVERSE, Property#property.inverse},
+    {?PROPERTY_OPTIONAL, Property#property.optional}
   ]};
 
 struct(Any) -> Any.

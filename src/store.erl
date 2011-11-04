@@ -15,7 +15,7 @@
 -record(item_type_table, {item, type}).
 -record(type_table, {uri, legal_properties=[]}).
 -record(type_parent_table, {type, parent}).
--record(property_table, {uri, ranges, arity=one, inverse}).
+-record(property_table, {uri, ranges, arity=one, inverse, optional}).
 
 init() ->
   mnesia:create_schema([node()]),
@@ -87,9 +87,10 @@ write(#type{uri=URI, label=Label, types=Types, properties=Props, parents=Parents
   TypeParentTableRecords = [#type_parent_table{type=URI, parent=Parent} || Parent <- Parents],
   store_table_records([TypeTableRecord|TypeParentTableRecords]);
 
-write(#property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges, arity=Arity, inverse=Inverse}) ->
-  write(#item{uri=URI, label=Label, types=Types, properties=Props}),
-  store_table_records([#property_table{uri=URI, ranges=Ranges, arity=Arity, inverse=Inverse}]).
+write(#property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges,
+  arity=Arity, inverse=Inverse, optional=Optional}) ->
+    write(#item{uri=URI, label=Label, types=Types, properties=Props}),
+    store_table_records([#property_table{uri=URI, ranges=Ranges, arity=Arity, inverse=Inverse, optional=Optional}]).
 
 store_table_records([First|Rest]) ->
   mnesia:write(First),
@@ -116,8 +117,9 @@ read_type(URI) ->
 read_property(URI) ->
   case read_item(URI) of
     #item{uri=URI, label=Label, types=Types, properties=Props} ->
-      [#property_table{ranges=Ranges, arity=Arity, inverse=Inverse}] = read(property_table, URI),
-      #property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges, arity=Arity, inverse=Inverse};
+      [#property_table{ranges=Ranges, arity=Arity, inverse=Inverse, optional=Optional}] = read(property_table, URI),
+      #property{uri=URI, label=Label, types=Types, properties=Props, ranges=Ranges,
+        arity=Arity, inverse=Inverse, optional=Optional};
     undefined -> undefined
   end.
 

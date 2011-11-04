@@ -83,7 +83,10 @@ validate_legal_property(LegalProperty, #item{properties=Properties}) ->
   PropertyURIs = [PropertyURI || {PropertyURI, _} <- Properties],
   case lists:member(LegalProperty, PropertyURIs) of
     true -> {true, []};
-    false -> {false, legal_property_missing(LegalProperty)}
+    false -> case store:read_property(LegalProperty) of
+      #property{optional=false} -> {false, legal_property_missing(LegalProperty)};
+      #property{optional=true} -> {true, []}
+    end
   end.
 
 validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
