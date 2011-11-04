@@ -86,16 +86,20 @@ struct(Type=#type{}) ->
   ]};
 
 struct(Property=#property{}) ->
-  {struct, [
+  Properties =[
     {?URI, Property#property.uri},
     {?PROPERTY_LABEL, Property#property.label},
     {?PROPERTY_TYPES, Property#property.types},
     {"properties", Property#property.properties},
     {?PROPERTY_RANGES, Property#property.ranges},
     {?PROPERTY_ARITY, Property#property.arity},
-    {?PROPERTY_INVERSE, Property#property.inverse},
     {?PROPERTY_OPTIONAL, Property#property.optional}
-  ]};
+  ],
+  NewProperties = case Property#property.inverse of
+    undefined -> Properties;
+    Value -> Properties ++ [{?PROPERTY_INVERSE, Value}]
+  end,
+  {struct, NewProperties};
 
 struct(Any) -> Any.
 
