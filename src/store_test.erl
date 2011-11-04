@@ -84,28 +84,6 @@ core_types() ->
       ?PROPERTY_ARITY
     ]
   },
-  TypeCondition = #type{uri=?FILTER, label= <<"Filter">>, legal_properties=[
-    ?PROPERTY_TYPES,
-    ?PROPERTY_LEGALPROPERTIES,
-    ?PROPERTY_RANGES
-  ]},
-  ItemCondition = #type{uri=?ITEMFILTER, label= <<"Item Filter">>, legal_properties=[
-    ?PROPERTY_TYPES,
-    ?PROPERTY_LEGALPROPERTIES,
-    ?PROPERTY_RANGEVALUES
-  ]},
-  RangeValue
-  View = #type{uri= ?VIEW, label= <<"View">>,
-    legal_properties=[
-      ?PROPERTY_FILTERS
-    ]
-  },
-  Model = #type{uri= ?MODEL, label= <<"Model">>,
-    legal_properties=[
-      ?PROPERTY_VIEW,
-      ?ITEMS
-    ]
-  },
   [Item, Type, Property].
 
 core_properties() ->
