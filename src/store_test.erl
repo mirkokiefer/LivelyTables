@@ -74,14 +74,36 @@ core_types() ->
     ?PROPERTY_LABEL,
     ?PROPERTY_TYPES
   ]},
-  Type = #type{uri= ?TYPE, label= <<"Type">>, parents= [?ITEM], legal_properties=[
+  Type = #type{uri= ?TYPE, label= <<"Type">>, legal_properties=[
     ?PROPERTY_LEGALPROPERTIES,
     ?PROPERTY_PARENTS
   ]},
-  Property = #type{uri= ?PROPERTY, label= <<"Property">>, types=[?TYPE], parents= [?ITEM],
+  Property = #type{uri= ?PROPERTY, label= <<"Property">>,
     legal_properties=[
       ?PROPERTY_RANGES,
       ?PROPERTY_ARITY
+    ]
+  },
+  TypeCondition = #type{uri=?FILTER, label= <<"Filter">>, legal_properties=[
+    ?PROPERTY_TYPES,
+    ?PROPERTY_LEGALPROPERTIES,
+    ?PROPERTY_RANGES
+  ]},
+  ItemCondition = #type{uri=?ITEMFILTER, label= <<"Item Filter">>, legal_properties=[
+    ?PROPERTY_TYPES,
+    ?PROPERTY_LEGALPROPERTIES,
+    ?PROPERTY_RANGEVALUES
+  ]},
+  RangeValue
+  View = #type{uri= ?VIEW, label= <<"View">>,
+    legal_properties=[
+      ?PROPERTY_FILTERS
+    ]
+  },
+  Model = #type{uri= ?MODEL, label= <<"Model">>,
+    legal_properties=[
+      ?PROPERTY_VIEW,
+      ?ITEMS
     ]
   },
   [Item, Type, Property].

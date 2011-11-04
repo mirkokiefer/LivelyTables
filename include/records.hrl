@@ -11,6 +11,8 @@
 -define(ITEM, <<"item">>).
 -define(TYPE, <<"type">>).
 -define(PROPERTY, <<"property">>).
+-define(VIEW, <<"view">>).
+-define(HIERARCHY, <<"hierarchy">>).
 
 % Core Properties
 -define(URI, <<"uri">>).

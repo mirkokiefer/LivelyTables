@@ -47,6 +47,11 @@ get([<<"property">>, URI], _, Req) ->
   Property = store_interface:read_property(URI),
   send(Req, utils:json(Property));
 
+get([<<"_file">>|FileTokens], _, Req) ->
+  Path = lists:flatten(["/" ++ binary_to_list(Directory) || Directory <- FileTokens]),
+  Directory = filename:dirname(Path),
+  Req:serve_file(filename:basename(Path), filename:absname("../www/" ++ Directory));
+
 get([TypeID, ItemID], _, Req) ->
   Item = store_interface:read_item(ItemID, TypeID),
   send(Req, utils:json(Item));
