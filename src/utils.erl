@@ -1,5 +1,5 @@
 -module(utils).
--export([log/1, encode/1, item2type/1, type2item/1,
+-export([log/1, encode/1, set/1, item2type/1, type2item/1,
   item2property/1, property2item/1,
   json/1, json2item/1, json2type/1, json2property/1]).
 
@@ -9,6 +9,9 @@ log(Message) -> io:format("~p~n", [Message]).
 
 encode(String) ->
   unicode:characters_to_binary(io_lib:format("~ts", [String])).
+
+set(List) ->
+  sets:to_list(sets:from_list(List)).
 
 item2type(#item{uri=URI, label=Label, properties=Properties}) ->
   item2type(Properties, #type{uri=URI, label=Label}).

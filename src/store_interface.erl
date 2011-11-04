@@ -66,7 +66,7 @@ merge_properties(OldProperties, NewProperties) ->
   LeftOutProps ++ NewProperties.
 
 validate_type_requirements(Item=#item{types=Types}) ->
-  ParentTypeURIs = Types ++ lists:flatten([store:read_parents(Type) || Type <- Types]),
+  ParentTypeURIs = utils:set(Types ++ lists:flatten([store:read_parents(Type) || Type <- Types])),
   ParentTypes = [store:read_type(Each) || Each <- ParentTypeURIs],
   Results = [validate_legal_properties(LegalProps, Item) || #type{legal_properties=LegalProps} <- ParentTypes],
   sum_result(Results).
@@ -104,16 +104,16 @@ validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
 validate_property_values(Properties) -> validate_property_values(Properties, {true, []}).
 
 validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
-  case store:read_property(PropertyURI) of
+  {ValidProperty, PropertyErrors} = case store:read_property(PropertyURI) of
     undefined -> {false, property_not_exists(PropertyURI, Value)};
     #property{ranges=Ranges, arity=Arity} -> 
-      Result = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
-      {ValidProperty, PropertyErrors} = case Result of
+      ValidRange = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
+      case ValidRange of
         true -> {true, []};
         false -> {false, invalid_property_value(PropertyURI, Ranges, Value)}
-      end,
-      validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors})
-  end;
+      end
+  end,
+  validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});
 validate_property_values([], Result) -> Result.
 
 validate_property_range(Range, ?ARITY_MANY, Values) ->
@@ -128,6 +128,7 @@ validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> is_boolean
 validate_property_range(Range, ?ARITY_ONE, Value) ->
   lists:member(Range, store:read_types_of_item(Value)).
 
+%Merges Error results
 sum_result(Result) -> sum_result(Result, {true, []}).
   
 sum_result([{Valid, Errors}|Rest], {SumValid, SumErrors}) ->
