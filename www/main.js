@@ -19,6 +19,7 @@ $(function() {
   testPut("john", "employee", badItem());
   testPut("manager1", "type", sampleType());
   testPut("manager2", "type", badType());
+  testPut("owns", "property", sampleProperty());
 });
 
 var testPut = function(id, type, item) {
@@ -76,4 +77,14 @@ var badType = function() {
     "jklproprties":[]
   };
   return type;
+}
+
+var sampleProperty = function() {
+  var property = {
+    "label":"Owns",
+    "properties":[],
+    "ranges":["item"],
+    "arity":"many"
+  };
+  return property;
 }
