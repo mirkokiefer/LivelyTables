@@ -38,7 +38,6 @@ var testPut = function(id, type, item) {
 var sampleItem = function() {
   var item = {
     "label":"Mike",
-    "types":["employee"],
     "properties": {
       "age":40,
       "salary":2000,
@@ -51,7 +50,6 @@ var sampleItem = function() {
 var badItem = function() {
   var item = {
     "label":"John",
-    "types":["employee"],
     "properties": {
       "age":"40"
     }
@@ -62,7 +60,6 @@ var badItem = function() {
 var sampleType = function() {
   var type = {
     "label":"Manager",
-    "types":["type"],
     "parents":["employee"],
     "properties":[],
     "legal_properties":["manages"]
@@ -72,7 +69,6 @@ var sampleType = function() {
 
 var badType = function() {
   var type = {
-    "types":["type"],
     "parents":["employee"],
     "jklproprties":[]
   };
