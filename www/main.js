@@ -24,15 +24,15 @@ $(function() {
 
 var testPut = function(id, type, item) {
   $.ajax({
-        type: 'PUT',
-        async: true,
-        data: JSON.stringify(item),
-        contentType: 'application/json',
-        url: "/" + type + "/" + id,
-        success: function(jsonData) {
-          console.log(jsonData);
-        }
-      });
+    type: 'PUT',
+    async: true,
+    data: JSON.stringify(item),
+    contentType: 'application/json',
+    url: "/" + type + "/" + id,
+    success: function(jsonData) {
+      console.log(jsonData);
+    }
+  });
 };
 
 var sampleItem = function() {
