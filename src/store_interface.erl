@@ -57,12 +57,16 @@ merge_items(OldItem, NewItem, NewType) ->
       false -> [NewType|NewTypes]
      end
   end,
-  MergedProperties = merge_properties(OldProperties, NewProperties),
+  #type{legal_properties=LegalProperties} = store:read_type(NewType),
+  MergedProperties = merge_properties(OldProperties, NewProperties, LegalProperties),
   NewItem#item{label=MergedLabel, types=MergedTypes, properties=MergedProperties}.
 
-merge_properties(OldProperties, NewProperties) ->
+merge_properties(OldProperties, NewProperties, LegalProperties) ->
   NewPropertyURIs = [URI || {URI, _} <- NewProperties],
-  LeftOutProps = [Prop || Prop={URI,_} <- OldProperties, lists:member(URI, NewPropertyURIs) == false],
+  LeftOutProps = [Prop || Prop={URI,_} <- OldProperties,
+    lists:member(URI, NewPropertyURIs) == false,
+    lists:member(URI, LegalProperties) == false
+  ],
   LeftOutProps ++ NewProperties.
 
 validate_type_requirements(Item=#item{types=Types}) ->
@@ -116,6 +120,7 @@ validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
   validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});
 validate_property_values([], Result) -> Result.
 
+%todo: fails silently if range is "many" but value is not a list
 validate_property_range(Range, ?ARITY_MANY, Values) ->
   lists:all(fun(Value) -> validate_property_range(Range, ?ARITY_ONE, Value) end, Values);
 
