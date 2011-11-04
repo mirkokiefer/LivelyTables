@@ -31,9 +31,12 @@ write(Item, Type, ConversionFun) ->
     {false, _, Errors} -> {error, Errors}
   end.
 
-validate_item(Item=#item{uri=URI}, TypeURI) ->
+validate_item(Item=#item{uri=URI, types=Types}, TypeURI) ->
   MergedItem = case store:read_item(URI) of
-    undefined -> Item;
+    undefined -> case lists:member(TypeURI, Types) of
+      true -> Item;
+      false -> Item#item{types=[TypeURI|Types]}
+    end;
     OldItem -> merge_items(OldItem, Item, TypeURI)
   end,
   {ValidType, TypeErrors} = validate_type_requirements(MergedItem),
