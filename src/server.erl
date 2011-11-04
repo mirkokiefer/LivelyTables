@@ -26,16 +26,16 @@ loop(Req) ->
   end.
 
 get([TypeID], _, Req) ->
-  ItemURIs = store:read_items_of_type(TypeID),
+  ItemURIs = store_interface:read_items_of_type(TypeID),
   send(Req, utils:json(ItemURIs));
 
 get([<<"type">>, <<"_full">>], _, Req) ->
-  TypeURIs = store:read_items_of_type(?TYPE),
+  TypeURIs = store_interface:read_items_of_type(?TYPE),
   Types = [store_interface:read_type(TypeURI) || TypeURI <- TypeURIs],
   send(Req, utils:json(Types));
 
 get([TypeID, <<"_full">>], _, Req) ->
-  ItemURIs = store:read_items_of_type(TypeID),
+  ItemURIs = store_interface:read_items_of_type(TypeID),
   Items = [store_interface:read_item(ItemURI, TypeID) || ItemURI <- ItemURIs],
   send(Req, utils:json(Items));
 
