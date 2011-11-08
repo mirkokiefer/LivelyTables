@@ -1,6 +1,6 @@
 -module(store_interface).
 
--export([write_item/2, write_type/1, write_property/1,
+-export([write_item/1, write_item/2, write_type/1, write_property/1,
   read_item/2, read_type/1, read_property/1, read_items_of_type/1,
   validate_item/2]).
 
@@ -19,6 +19,8 @@ read_type(TypeURI) -> store:read_type(TypeURI).
 read_property(PropertyURI) -> store:read_property(PropertyURI).
 
 read_items_of_type(TypeURI) -> store:read_items_of_type(TypeURI).
+
+write_item(Item) -> write_item(Item, ?ITEM).
 
 write_item(Item, Type) ->
   write(Item, Type, fun(FinalItem) -> FinalItem end).
@@ -133,6 +135,12 @@ validate_property_range(?PROPERTY_TYPE_STRING, ?ARITY_ONE, Value) -> is_bitstrin
 validate_property_range(?PROPERTY_TYPE_NUMBER, ?ARITY_ONE, Value) -> is_number(Value);
 
 validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> is_boolean(Value);
+
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_NUMBER) -> true;
+
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_STRING) -> true;
+
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_BOOLEAN) -> true;
 
 validate_property_range(Range, ?ARITY_ONE, Value) ->
   lists:member(Range, store:read_types_of_item(Value)).
