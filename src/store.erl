@@ -67,14 +67,9 @@ stop() ->
   mnesia:stop().
 
 write_all(Records) ->
-  F = fun() -> write_each(Records) end,
+  F = fun() -> [write(Record) || Record <- Records] end,
   mnesia:transaction(F),
   {ok, success}.
-
-write_each([First|Rest]) ->
-  write(First),
-  write_each(Rest);
-write_each([]) -> {ok, success}.
 
 write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
   ItemTableRecord = #item_table{uri=URI, label=Label, properties=Properties},
