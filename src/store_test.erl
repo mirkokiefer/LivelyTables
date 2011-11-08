@@ -92,11 +92,11 @@ core_properties() ->
   Parents = #property{uri= ?PROPERTY_PARENTS, label= <<"Parents">>, range=?TYPE, arity=?ARITY_MANY},
   LegalProps = #property{uri= ?PROPERTY_LEGALPROPERTIES, label= <<"Legal Properties">>,
     range=?PROPERTY, arity=?ARITY_MANY},
-  Ranges = #property{uri=?PROPERTY_RANGE, label= <<"Range">>, range=?TYPE, arity=?ARITY_MANY},
+  Range = #property{uri=?PROPERTY_RANGE, label= <<"Range">>, range=?TYPE, arity=?ARITY_ONE},
   Arity = #property{uri=?PROPERTY_ARITY, label= <<"Arity">>, range=?PROPERTY_TYPE_STRING},
   Inverse = #property{uri=?PROPERTY_INVERSE, label= <<"Inverse">>, range=?PROPERTY, optional=true},
   Optional = #property{uri=?PROPERTY_OPTIONAL, label= <<"Optional">>, range=?PROPERTY_TYPE_BOOLEAN},
-  [Label, Types, Parents, LegalProps, Ranges, Arity, Inverse, Optional].
+  [Label, Types, Parents, LegalProps, Range, Arity, Inverse, Optional].
 
 bad_item() ->
   #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
