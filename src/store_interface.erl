@@ -2,7 +2,7 @@
 
 -export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
   read_item/2, read_type/1, read_property/1, read_items_of_type/1,
-  validate_item/2]).
+  validate_item/1]).
 
 -include("../include/records.hrl").
 
@@ -35,22 +35,20 @@ write_property(Property) ->
   write(utils:property2item(Property), ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
 
 write(Item, Type, ConversionFun) ->
-  case validate_item(Item, Type) of
-    {true, FinalItem, _} -> store:write_all([ConversionFun(FinalItem)]);
-    {false, _, Errors} -> {error, Errors}
+  MergedItem = merge_items(Item, Type),
+  case validate_item(MergedItem) of
+    {true, _} -> store:write_all([ConversionFun(MergedItem)]);
+    {false, Errors} -> {error, Errors}
   end.
 
-validate_item(Item=#item{uri=URI, types=Types}, TypeURI) ->
-  MergedItem = case store:read_item(URI) of
+merge_items(Item=#item{uri=URI, types=Types}, TypeURI) ->
+  case store:read_item(URI) of
     undefined -> case lists:member(TypeURI, Types) of
       true -> Item;
       false -> Item#item{types=[TypeURI|Types]}
     end;
     OldItem -> merge_items(OldItem, Item, TypeURI)
-  end,
-  {ValidType, TypeErrors} = validate_type_requirements(MergedItem),
-  {ValidProperties, PropertyErrors} = validate_properties(MergedItem),
-  {ValidType and ValidProperties, MergedItem, TypeErrors++PropertyErrors}.
+  end.
 
 merge_items(OldItem, NewItem, NewType) ->
   #item{label=OldLabel, types=OldTypes, properties=OldProperties} = OldItem,
@@ -77,6 +75,11 @@ merge_properties(OldProperties, NewProperties, LegalProperties) ->
     lists:member(URI, LegalProperties) == false
   ],
   LeftOutProps ++ NewProperties.
+
+validate_item(Item) ->
+  {ValidType, TypeErrors} = validate_type_requirements(Item),
+  {ValidProperties, PropertyErrors} = validate_properties(Item),
+  {ValidType and ValidProperties, TypeErrors++PropertyErrors}.
 
 validate_type_requirements(Item=#item{types=Types}) ->
   ParentTypeURIs = utils:set(Types ++ lists:flatten([store:read_parents(Type) || Type <- Types])),
@@ -144,6 +147,9 @@ validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_NUMBER) -> true;
 validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_STRING) -> true;
 
 validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_BOOLEAN) -> true;
+
+validate_property_range(Range, ?ARITY_ONE, _Value=#item{types=Types}) ->
+  lists:member(Range, Types);
 
 validate_property_range(Range, ?ARITY_ONE, Value) ->
   lists:member(Range, store:read_types_of_item(Value)).
