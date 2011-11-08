@@ -36,7 +36,7 @@ item2property(#item{uri=URI, label=Label, properties=Properties}) ->
 
 item2property([{PropertyURI, Value}|Rest], Property=#property{properties=Properties}) ->
   NewProperty = case PropertyURI of
-    ?PROPERTY_RANGES -> Property#property{ranges=Value};
+    ?PROPERTY_RANGE -> Property#property{range=Value};
     ?PROPERTY_ARITY -> Property#property{arity=Value};
     ?PROPERTY_INVERSE -> Property#property{inverse=Value};
     ?PROPERTY_OPTIONAL -> Property#property{optional=Value};
@@ -48,7 +48,7 @@ item2property([], Property) -> Property.
 property2item(Property) ->
   Item=#item{uri=Property#property.uri, label=Property#property.label, types=Property#property.types,
     properties=[
-      {?PROPERTY_RANGES, Property#property.ranges},
+      {?PROPERTY_RANGE, Property#property.range},
       {?PROPERTY_ARITY, Property#property.arity},
       {?PROPERTY_OPTIONAL, Property#property.optional}
     ] ++ Property#property.properties
@@ -91,7 +91,7 @@ struct(Property=#property{}) ->
     {?URI, Property#property.uri},
     {?PROPERTY_LABEL, Property#property.label},
     {?PROPERTY_TYPES, Property#property.types},
-    {?PROPERTY_RANGES, Property#property.ranges},
+    {?PROPERTY_RANGE, Property#property.range},
     {?PROPERTY_ARITY, Property#property.arity},
     {?PROPERTY_OPTIONAL, Property#property.optional}
   ] ++ Property#property.properties,

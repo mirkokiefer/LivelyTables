@@ -114,11 +114,11 @@ validate_property_values(Properties) -> validate_property_values(Properties, {tr
 validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
   {ValidProperty, PropertyErrors} = case store:read_property(PropertyURI) of
     undefined -> {false, property_not_exists(PropertyURI, Value)};
-    #property{ranges=Ranges, arity=Arity} -> 
-      ValidRange = lists:any(fun(Range) -> validate_property_range(Range, Arity, Value) end, Ranges),
+    #property{range=Range, arity=Arity} -> 
+      ValidRange = validate_property_range(Range, Arity, Value),
       case ValidRange of
         true -> {true, []};
-        false -> {false, invalid_property_value(PropertyURI, Ranges, Value)}
+        false -> {false, invalid_property_value(PropertyURI, Range, Value)}
       end
   end,
   validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});

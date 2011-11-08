@@ -62,11 +62,11 @@ test_items() ->
   [Paul, Jim].
 
 test_properties() ->
-  Manages = #property{uri= <<"manages">>, label= <<"Manages">>, ranges=[<<"employee">>],
+  Manages = #property{uri= <<"manages">>, label= <<"Manages">>, range= <<"employee">>,
     arity=?ARITY_MANY, inverse= <<"boss">>},
-  Boss = #property{uri= <<"boss">>, label= <<"Boss">>, ranges=[<<"manager">>], inverse= <<"manages">>},
-  Salary = #property{uri= <<"salary">>, label= <<"Salary">>, ranges= [?PROPERTY_TYPE_NUMBER]},
-  Age = #property{uri= <<"age">>, label= <<"Age">>, ranges= [?PROPERTY_TYPE_NUMBER]},
+  Boss = #property{uri= <<"boss">>, label= <<"Boss">>, range= <<"manager">>, inverse= <<"manages">>},
+  Salary = #property{uri= <<"salary">>, label= <<"Salary">>, range=?PROPERTY_TYPE_NUMBER},
+  Age = #property{uri= <<"age">>, label= <<"Age">>, range=?PROPERTY_TYPE_NUMBER},
   [Manages, Boss, Salary, Age].
 
 core_types() ->
@@ -80,22 +80,22 @@ core_types() ->
   ]},
   Property = #type{uri= ?PROPERTY, label= <<"Property">>,
     legal_properties=[
-      ?PROPERTY_RANGES,
+      ?PROPERTY_RANGE,
       ?PROPERTY_ARITY
     ]
   },
   [Item, Type, Property].
 
 core_properties() ->
-  Label = #property{uri= ?PROPERTY_LABEL, label= <<"Label">>, ranges=[?PROPERTY_TYPE_STRING]},
-  Types = #property{uri= ?PROPERTY_TYPES, label= <<"Types">>, ranges=[?TYPE], arity=?ARITY_MANY},
-  Parents = #property{uri= ?PROPERTY_PARENTS, label= <<"Parents">>, ranges=[?TYPE], arity=?ARITY_MANY},
+  Label = #property{uri= ?PROPERTY_LABEL, label= <<"Label">>, range=?PROPERTY_TYPE_STRING},
+  Types = #property{uri= ?PROPERTY_TYPES, label= <<"Types">>, range=?TYPE, arity=?ARITY_MANY},
+  Parents = #property{uri= ?PROPERTY_PARENTS, label= <<"Parents">>, range=?TYPE, arity=?ARITY_MANY},
   LegalProps = #property{uri= ?PROPERTY_LEGALPROPERTIES, label= <<"Legal Properties">>,
-    ranges=[?PROPERTY], arity=?ARITY_MANY},
-  Ranges = #property{uri=?PROPERTY_RANGES, label= <<"Range">>, ranges=[?TYPE], arity=?ARITY_MANY},
-  Arity = #property{uri=?PROPERTY_ARITY, label= <<"Arity">>, ranges=[?PROPERTY_TYPE_STRING]},
-  Inverse = #property{uri=?PROPERTY_INVERSE, label= <<"Inverse">>, ranges=[?PROPERTY], optional=true},
-  Optional = #property{uri=?PROPERTY_OPTIONAL, label= <<"Optional">>, ranges=[?PROPERTY_TYPE_BOOLEAN]},
+    range=?PROPERTY, arity=?ARITY_MANY},
+  Ranges = #property{uri=?PROPERTY_RANGE, label= <<"Range">>, range=?TYPE, arity=?ARITY_MANY},
+  Arity = #property{uri=?PROPERTY_ARITY, label= <<"Arity">>, range=?PROPERTY_TYPE_STRING},
+  Inverse = #property{uri=?PROPERTY_INVERSE, label= <<"Inverse">>, range=?PROPERTY, optional=true},
+  Optional = #property{uri=?PROPERTY_OPTIONAL, label= <<"Optional">>, range=?PROPERTY_TYPE_BOOLEAN},
   [Label, Types, Parents, LegalProps, Ranges, Arity, Inverse, Optional].
 
 bad_item() ->
