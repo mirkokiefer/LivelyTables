@@ -73,7 +73,7 @@ var badType = function() {
 var sampleProperty = function() {
   var property = {
     "label":"Owns",
-    "ranges":["item"],
+    "range":"item",
     "arity":"many"
   };
   return property;
