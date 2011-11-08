@@ -62,7 +62,7 @@ merge_items(OldItem, NewItem, NewType) ->
     _Any -> case lists:member(NewType, NewTypes) of
       true -> NewTypes;
       false -> [NewType|NewTypes]
-     end
+    end
   end,
   #type{legal_properties=LegalProperties} = store:read_type(NewType),
   MergedProperties = merge_properties(OldProperties, NewProperties, LegalProperties),
