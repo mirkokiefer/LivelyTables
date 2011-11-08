@@ -7,6 +7,7 @@
 run() ->
   {atomic, {ok, success}} = store:transaction(fun test_write_core/0),
   {atomic, {ok, success}} = store:transaction(fun test_write_types/0),
+  {atomic, {ok, success}} = store:transaction(fun test_write_composite/0),
   {ok, success}.
 
 test_write_core() ->
@@ -15,6 +16,9 @@ test_write_core() ->
 
 test_write_types() ->
   {ok, success} = store:write_all(test_types()).
+
+test_write_composite() ->
+  {ok, success} = store:write_all(test_composite()).
 
 core_types() ->
   Item = #type{uri= ?ITEM, label= <<"Item">>, parents=[], legal_properties=[
@@ -52,3 +56,17 @@ test_types() ->
   Manager = #type{uri= <<"manager">>, label= <<"Manager">>, parents=[<<"employee">>],
     legal_properties=[<<"manages">>]},
   [Person, Employee, Manager].
+
+test_composite() ->
+  RealEstate = #type{uri= <<"real_estate">>, label= <<"Real Estate">>, legal_properties=[
+    #property{uri= <<"accomodates">>, label= <<"accomodates">>, range= <<"person">>, arity= <<"many">>}
+  ]},
+  Company = #type{uri= <<"company">>, label= <<"Company">>, legal_properties=[
+    #property{uri= <<"company_owns">>, label= <<"owns">>, range= RealEstate}
+  ]},
+  SomeCompany = #item{uri= <<"some_company">>, label= <<"Some Company">>, types=[Company], properties=[
+    {<<"company_owns">>, #item{label= <<"A House">>, types=[<<"real_estate">>], properties=[
+      {<<"accomodates">>, #item{uri= <<"bob">>, label= <<"Bob">>, properties=[{<<"age">>, 20}]}}
+    ]}}
+  ]},
+  [SomeCompany].

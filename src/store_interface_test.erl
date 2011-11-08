@@ -71,6 +71,27 @@ bad_items_updated() ->
   ]},
   [Paul].
 
+composite_items() ->
+  Alex = #item{uri= <<"alex">>, label= <<"Alex">>, types=[<<"person">>], properties=[
+    {<<"age">>, 50},
+    {<<"salary">>, 2000},
+    {<<"boss">>, #item{uri= <<"jack">>, label= <<"Jack">>, types=[<<"manager">>], properties=[
+      {<<"age">>, 40},
+      {<<"salary">>, 10000},
+      {<<"manages">>, [<<"alex">>]}
+    ]}}
+  ]},
+  Fred = #item{uri= <<"fred">>, label= <<"Fred">>, types=[<<"person">>], properties=[
+    {<<"age">>, 20},
+    {<<"salary">>, 2500},
+    {<<"boss">>, #item{label= <<"George">>, types=[<<"manager">>], properties=[
+      {<<"age">>, 60},
+      {<<"salary">>, 12000},
+      {<<"manages">>, [<<"fred">>]}
+    ]}}
+  ]},
+  [Alex, Fred].
+
 check_each_result(Result) ->
   case lists:all(fun(Each) -> Each == {ok, success} end, Result) of
     true -> {ok, success};

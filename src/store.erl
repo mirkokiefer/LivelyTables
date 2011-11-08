@@ -74,20 +74,49 @@ write_all(Records) ->
   {ok, success}.
 
 write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
-  ItemTableRecord = #item_table{uri=URI, label=Label, properties=Properties},
-  ItemTypeTableRecords = [#item_type_table{item=URI, type=Type} || Type <- Types],
+  ItemTableRecord = #item_table{uri=URI, label=Label, properties=resolve_properties(Properties)},
+  ItemTypeTableRecords = [#item_type_table{item=URI, type=resolve(Type)} || Type <- Types],
   store_table_records([ItemTableRecord|ItemTypeTableRecords]);
 
 write(#type{uri=URI, label=Label, types=Types, properties=Props, parents=Parents, legal_properties=LegalProps}) ->
   write(#item{uri=URI, label=Label, types=Types, properties=Props}),
-  TypeTableRecord = #type_table{uri=URI, legal_properties=LegalProps},
-  TypeParentTableRecords = [#type_parent_table{type=URI, parent=Parent} || Parent <- Parents],
+  TypeTableRecord = #type_table{uri=URI, legal_properties=resolve(LegalProps)},
+  TypeParentTableRecords = [#type_parent_table{type=URI, parent=resolve(Parent)} || Parent <- Parents],
   store_table_records([TypeTableRecord|TypeParentTableRecords]);
 
 write(#property{uri=URI, label=Label, types=Types, properties=Props, range=Range,
   arity=Arity, inverse=Inverse, optional=Optional}) ->
     write(#item{uri=URI, label=Label, types=Types, properties=Props}),
-    store_table_records([#property_table{uri=URI, range=Range, arity=Arity, inverse=Inverse, optional=Optional}]).
+    store_table_records([#property_table{uri=URI, range=resolve(Range), arity=Arity,
+      inverse=resolve(Inverse), optional=Optional}
+    ]).
+
+
+resolve([]) -> [];
+
+resolve([First|Rest]) ->
+  [resolve(First)|resolve(Rest)];
+
+resolve(Item=#item{uri=undefined, types=Types, properties=Properties}) ->
+  Item#item{types=resolve(Types), properties=resolve_properties(Properties)};
+
+resolve(Item=#item{uri=URI}) ->
+  write(Item),
+  URI;
+
+resolve(Property=#property{uri=URI}) ->
+  write(Property),
+  URI;
+
+resolve(Type=#type{uri=URI}) ->
+  write(Type),
+  URI;
+
+resolve(URI) -> URI.
+
+resolve_properties([{Property, Value}|Rest]) ->
+  [{Property, resolve(Value)}|resolve_properties(Rest)];
+resolve_properties([]) -> [].
 
 store_table_records([First|Rest]) ->
   mnesia:write(First),
