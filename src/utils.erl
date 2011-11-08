@@ -78,19 +78,14 @@ struct(Item=#item{}) ->
   ] ++ Item#item.properties};
 
 struct(Type=#type{}) ->
-  {struct, [
-    {?URI, Type#type.uri},
-    {?PROPERTY_LABEL, Type#type.label},
-    {?PROPERTY_TYPES, Type#type.types},
+  {struct, Properties} = struct(type2item(Type)),
+  {struct, Properties ++ [
     {?PROPERTY_PARENTS, Type#type.parents},
     {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
-  ] ++ Type#type.properties};
+  ]};
 
 struct(Property=#property{}) ->
   Properties =[
-    {?URI, Property#property.uri},
-    {?PROPERTY_LABEL, Property#property.label},
-    {?PROPERTY_TYPES, Property#property.types},
     {?PROPERTY_RANGE, Property#property.range},
     {?PROPERTY_ARITY, Property#property.arity},
     {?PROPERTY_OPTIONAL, Property#property.optional}
@@ -99,7 +94,8 @@ struct(Property=#property{}) ->
     undefined -> Properties;
     Value -> Properties ++ [{?PROPERTY_INVERSE, Value}]
   end,
-  {struct, NewProperties};
+  {struct, ItemProperties} = struct(property2item(Property)),
+  {struct, ItemProperties ++ NewProperties};
 
 struct(Any) -> Any.
 
