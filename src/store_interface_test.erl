@@ -77,7 +77,7 @@ bad_items_updated() ->
   [Paul].
 
 composite_items() ->
-  Alex = #item{uri= <<"alex">>, label= <<"Alex">>, types=[<<"person">>], properties=[
+  Alex = #item{uri= <<"alex">>, label= <<"Alex">>, types=[<<"employee">>], properties=[
     {<<"age">>, 50},
     {<<"salary">>, 2000},
     {<<"boss">>, #item{uri= <<"jack">>, label= <<"Jack">>, types=[<<"manager">>], properties=[
@@ -85,7 +85,7 @@ composite_items() ->
       {<<"salary">>, 10000}
     ]}}
   ]},
-  Fred = #item{uri= <<"fred">>, label= <<"Fred">>, types=[<<"person">>], properties=[
+  Fred = #item{uri= <<"fred">>, label= <<"Fred">>, types=[<<"employee">>], properties=[
     {<<"age">>, 20},
     {<<"salary">>, 2500},
     {<<"boss">>, #item{label= <<"George">>, types=[<<"manager">>], properties=[
