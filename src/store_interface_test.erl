@@ -9,6 +9,7 @@ run() ->
   {atomic, {ok, success}} = t(fun test_write_valid_items/0),
   {atomic, {ok, success}} = t(fun test_update_valid_items/0),
   {atomic, {ok, success}} = t(fun test_update_invalid_items/0),
+  {atomic, {ok, success}} = t(fun test_composite_items/0),
   {ok, success}.
 
 test_write_properties() ->
@@ -31,6 +32,10 @@ test_update_invalid_items() ->
   Result = [store_interface:write_item(Item) || Item <- bad_items_updated()],
   check_each_invalid_result(Result).
 
+test_composite_items() ->
+  Result = [store_interface:write_item(Item) || Item <- composite_items()],
+  check_each_result(Result).
+
 test_items() ->
   Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
     {<<"age">>, 30},
@@ -51,7 +56,7 @@ test_items_updated() ->
 
 test_properties() ->
   Manages = #property{uri= <<"manages">>, label= <<"Manages">>, range= <<"employee">>,
-    arity=?ARITY_MANY},
+    arity=?ARITY_MANY, optional=true},
   Boss = #property{uri= <<"boss">>, label= <<"Boss">>, range= <<"manager">>, inverse= <<"manages">>, optional=true},
   Salary = #property{uri= <<"salary">>, label= <<"Salary">>, range=?PROPERTY_TYPE_NUMBER},
   Age = #property{uri= <<"age">>, label= <<"Age">>, range=?PROPERTY_TYPE_NUMBER},
@@ -77,8 +82,7 @@ composite_items() ->
     {<<"salary">>, 2000},
     {<<"boss">>, #item{uri= <<"jack">>, label= <<"Jack">>, types=[<<"manager">>], properties=[
       {<<"age">>, 40},
-      {<<"salary">>, 10000},
-      {<<"manages">>, [<<"alex">>]}
+      {<<"salary">>, 10000}
     ]}}
   ]},
   Fred = #item{uri= <<"fred">>, label= <<"Fred">>, types=[<<"person">>], properties=[
@@ -86,8 +90,7 @@ composite_items() ->
     {<<"salary">>, 2500},
     {<<"boss">>, #item{label= <<"George">>, types=[<<"manager">>], properties=[
       {<<"age">>, 60},
-      {<<"salary">>, 12000},
-      {<<"manages">>, [<<"fred">>]}
+      {<<"salary">>, 12000}
     ]}}
   ]},
   [Alex, Fred].
