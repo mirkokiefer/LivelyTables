@@ -70,12 +70,15 @@ json([First|Rest], Structs) ->
   json(Rest, [struct(First)|Structs]);
 json([], Structs) -> Structs.
 
-struct(Item=#item{}) ->
-  {struct, [
-    {?URI, Item#item.uri},
+struct(Item=#item{uri=URI}) ->
+  Properties = case URI of
+    undefined -> [];
+    _ -> [{?URI, URI}]
+  end,
+  {struct, Properties++[
     {?PROPERTY_LABEL, Item#item.label},
     {?PROPERTY_TYPES, Item#item.types}
-  ] ++ Item#item.properties};
+  ] ++ resolve_properties(Item#item.properties)};
 
 struct(Type=#type{}) ->
   {struct, Properties} = struct(type2item(Type)),
@@ -99,6 +102,13 @@ struct(Property=#property{}) ->
 
 struct(Any) -> Any.
 
+resolve(Item=#item{}) -> struct(Item);
+resolve(URI) -> URI.
+
+resolve_properties([{Property, Value}|Rest]) ->
+  [{Property, resolve(Value)}|resolve_properties(Rest)];
+resolve_properties([]) -> [].
+
 json2item({struct, Elements}) ->
   parse_item_elements(Elements, #item{}).
 
@@ -113,7 +123,12 @@ parse_item_elements([{Key, Value}|Rest], Item=#item{properties=Properties}) ->
     <<"uri">> -> Item#item{uri=Value};
     <<"label">> -> Item#item{label=Value};
     <<"types">> -> Item#item{types=Value};
-    _ -> Item#item{properties=[{Key, Value}|Properties]}
+    _ -> Item#item{properties=[{Key, parse_property_value(Value)}|Properties]}
   end,
   parse_item_elements(Rest, NewItem);
 parse_item_elements([], Item) -> Item.
+
+parse_property_value([]) -> [];
+parse_property_value([First|Rest]) -> [parse_property_value(First)|parse_property_value(Rest)];
+parse_property_value({struct, Elements}) -> json2item({struct, Elements});
+parse_property_value(Literal) -> Literal.
