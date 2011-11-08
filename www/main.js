@@ -20,6 +20,8 @@ $(function() {
   testPut("manager1", "type", sampleType());
   testPut("manager2", "type", badType());
   testPut("owns", "property", sampleProperty());
+  testPut("person", "type", updateType());
+  testPut("graham", "person", compositeItem());
 });
 
 var testPut = function(id, type, item) {
@@ -74,7 +76,24 @@ var sampleProperty = function() {
   var property = {
     "label":"Owns",
     "range":"item",
-    "arity":"many"
+    "arity":"many",
+    "optional": true
   };
   return property;
+}
+
+var updateType = function() {
+  var type = {
+    "legal_properties": ["age", "owns"]
+  };
+  return type;
+}
+
+var compositeItem = function() {
+  var item = {
+    "label": "Graham",
+    "age": 30,
+    "owns": [{"uri":"inspired", "label": "Inspired", "types": ["company"]}]
+  };
+  return item;
 }

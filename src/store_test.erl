@@ -62,11 +62,11 @@ test_composite() ->
     #property{uri= <<"accomodates">>, label= <<"accomodates">>, range= <<"person">>, arity= <<"many">>}
   ]},
   Company = #type{uri= <<"company">>, label= <<"Company">>, legal_properties=[
-    #property{uri= <<"company_owns">>, label= <<"owns">>, range= RealEstate}
+    #property{uri= <<"company_owns">>, label= <<"owns">>, range= RealEstate, optional=true}
   ]},
   SomeCompany = #item{uri= <<"some_company">>, label= <<"Some Company">>, types=[Company], properties=[
     {<<"company_owns">>, #item{label= <<"A House">>, types=[<<"real_estate">>], properties=[
-      {<<"accomodates">>, #item{uri= <<"bob">>, label= <<"Bob">>, properties=[{<<"age">>, 20}]}}
+      {<<"accomodates">>, #item{uri= <<"bob">>, label= <<"Bob">>, types=[<<"person">>], properties=[{<<"age">>, 20}]}}
     ]}}
   ]},
   [SomeCompany].

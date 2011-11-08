@@ -122,23 +122,24 @@ validate_property_values([{PropertyURI, Value}|Rest], {Valid, Errors}) ->
     #property{range=Range, arity=Arity} -> 
       Result = validate_property_range(Range, Arity, Value),
       case Result of
-        true -> {true, []};
-        false -> {false, invalid_property_value(PropertyURI, Range, Value)};
-        {false, RangeErrors} -> {false, invalid_property_value(PropertyURI, Range, Value, RangeErrors)}
+        {true, _} -> {true, []};
+        {false, RangeErrors} -> {false, invalid_property_value(PropertyURI, Range, RangeErrors)}
       end
   end,
   validate_property_values(Rest, {Valid and ValidProperty, PropertyErrors ++ Errors});
 validate_property_values([], Result) -> Result.
 
-%todo: fails silently if range is "many" but value is not a list
-validate_property_range(Range, ?ARITY_MANY, Values) ->
-  lists:all(fun(Value) -> validate_property_range(Range, ?ARITY_ONE, Value) end, Values);
-validate_property_range(?PROPERTY_TYPE_STRING, ?ARITY_ONE, Value) -> is_bitstring(Value);
-validate_property_range(?PROPERTY_TYPE_NUMBER, ?ARITY_ONE, Value) -> is_number(Value);
-validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> is_boolean(Value);
-validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_NUMBER) -> true;
-validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_STRING) -> true;
-validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_BOOLEAN) -> true;
+validate_property_range(_Range, ?ARITY_MANY, []) -> {true, []};
+validate_property_range(Range, ?ARITY_MANY, Values=[_|_]) ->
+  Results = [validate_property_range(Range, ?ARITY_ONE, Value) || Value <- Values],
+  sum_result(Results);
+validate_property_range(_Range, ?ARITY_MANY, _Value) -> {false, arity_error()};
+validate_property_range(?PROPERTY_TYPE_STRING, ?ARITY_ONE, Value) -> {is_bitstring(Value), []};
+validate_property_range(?PROPERTY_TYPE_NUMBER, ?ARITY_ONE, Value) -> {is_number(Value), []};
+validate_property_range(?PROPERTY_TYPE_BOOLEAN, ?ARITY_ONE, Value) -> {is_boolean(Value), []};
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_NUMBER) -> {true, []};
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_STRING) -> {true, []};
+validate_property_range(_, ?ARITY_ONE, ?PROPERTY_TYPE_BOOLEAN) -> {true, []};
 
 validate_property_range(Range, ?ARITY_ONE, Value=#type{}) ->
   validate_property_range(Range, ?ARITY_ONE, utils:type2item(Value));
@@ -148,11 +149,13 @@ validate_property_range(Range, ?ARITY_ONE, Value=#property{}) ->
 
 validate_property_range(Range, ?ARITY_ONE, Value=#item{types=Types}) ->
   case validate_item(Value) of
-    {true, _} -> lists:member(Range, Types);
+    {true, _} ->
+      Parents = Types ++ lists:flatten([store:read_parents(Type) || Type <- Types]),
+      {lists:member(Range, Parents), []};
     {false, Errors} -> {false, Errors}
   end;
 validate_property_range(Range, ?ARITY_ONE, Value) ->
-  lists:member(Range, store:read_types_of_item(Value)).
+  {lists:member(Range, store:read_types_of_item(Value)), []}.
 
 %Merges Error results
 sum_result(Result) -> sum_result(Result, {true, []}).
@@ -164,8 +167,9 @@ sum_result([], SumResult) -> SumResult.
 legal_property_missing(LegalProperty) -> [[{message, <<"Property missing on item">>}, {value, LegalProperty}]].
 property_not_exists(Property, Value) ->
   [[{message, <<"Property does not exist">>}, {property, Property}, {value, Value}]].
-invalid_property_value(Property, Range, Value) ->
-  [[{message, <<"Invalid property value">>}, {range, Range}, {property,Property}, {value, Value}]].
-invalid_property_value(Property, Range, Value, Errors) ->
+invalid_property_value(Property, Range, []) ->
+  [[{message, <<"Invalid property value">>}, {range, Range}, {property,Property}]];
+invalid_property_value(Property, Range, Details) ->
   [[{message, <<"Invalid property value">>}, {range, Range}, {property,Property},
-    {value, Value}, {errors, Errors}]].
+    {details, Details}]].
+arity_error() -> [[{message, <<"Arity is 'many' but only single value">>}]].
