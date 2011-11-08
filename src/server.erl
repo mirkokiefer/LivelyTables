@@ -66,20 +66,20 @@ get([_TypeID, _ItemID, Attachment], _, Req) ->
 put([<<"type">>, TypeID], _, Body, Req) ->
   Type = utils:json2type(Body),
   NewType = Type#type{uri=TypeID},
-  Response = valid2json(store_interface:write_type(NewType)),
-  send(Req, Response);
+  {atomic, Response} = t(fun() -> store_interface:write_type(NewType) end),
+  send(Req, valid2json(Response));
 
 put([<<"property">>, PropertyID], _, Body, Req) ->
   Property = utils:json2property(Body),
   NewProperty = Property#property{uri=PropertyID},
-  Response = valid2json(store_interface:write_property(NewProperty)),
-  send(Req, Response);
+  {atomic, Response} = t(fun() -> store_interface:write_property(NewProperty) end),
+  send(Req, valid2json(Response));
 
 put([TypeID, ItemID], _, Body, Req) ->
   Item = utils:json2item(Body),
   NewItem = Item#item{uri=ItemID},
-  Response = valid2json(store_interface:write_item(NewItem, TypeID)),
-  send(Req, Response).
+  {atomic, Response} = t(fun() -> store_interface:write_item(NewItem, TypeID) end),
+  send(Req, valid2json(Response)).
 
 valid2json({ok, success}) -> json({struct, [{success, true}]});
 valid2json({error, Errors}) -> json({struct, [{success, false}, {errors,Errors}]}).
@@ -87,3 +87,5 @@ valid2json({error, Errors}) -> json({struct, [{success, false}, {errors,Errors}]
 send(Req, Reply) -> Req:ok({"text/plain;charset=utf-8", Reply}).
 
 json(Term) -> mochijson2:encode(Term).
+
+t(Fun) -> store_interface:transaction(Fun).

@@ -1,7 +1,7 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
+-export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
   read_types_of_item/1, read_direct_types_of_item/1, read_parents/1, read_direct_parents/1,
   read_subtypes/1]).
 
@@ -66,9 +66,11 @@ start() ->
 stop() ->
   mnesia:stop().
 
+transaction(Fun) ->
+  mnesia:transaction(Fun).
+
 write_all(Records) ->
-  F = fun() -> [write(Record) || Record <- Records] end,
-  mnesia:transaction(F),
+  [write(Record) || Record <- Records],
   {ok, success}.
 
 write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->

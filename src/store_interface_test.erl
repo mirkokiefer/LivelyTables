@@ -4,11 +4,12 @@
 -include("../include/records.hrl").
 
 run() ->
-  {ok, success} = test_write_properties(),
-  {ok, success} = test_write_invalid_items(),
-  {ok, success} = test_write_valid_items(),
-  {ok, success} = test_update_valid_items(),
-  {ok, success} = test_update_invalid_items().
+  {atomic, {ok, success}} = t(fun test_write_properties/0),
+  {atomic, {ok, success}} = t(fun test_write_invalid_items/0),
+  {atomic, {ok, success}} = t(fun test_write_valid_items/0),
+  {atomic, {ok, success}} = t(fun test_update_valid_items/0),
+  {atomic, {ok, success}} = t(fun test_update_invalid_items/0),
+  {ok, success}.
 
 test_write_properties() ->
   Result = [store_interface:write_property(Property) || Property <- test_properties()],
@@ -87,3 +88,6 @@ check_each_invalid_result(Result) ->
     true -> {ok, success};
     false -> {error, Result}
   end.
+
+t(Fun) ->
+  store_interface:transaction(Fun).

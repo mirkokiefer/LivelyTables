@@ -5,8 +5,8 @@
 -include("../include/records.hrl").
 
 run() ->
-  test_write_core(),
-  test_write_types(),
+  {atomic, {ok, success}} = store:transaction(fun test_write_core/0),
+  {atomic, {ok, success}} = store:transaction(fun test_write_types/0),
   {ok, success}.
 
 test_write_core() ->

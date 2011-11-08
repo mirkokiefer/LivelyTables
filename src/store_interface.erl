@@ -1,10 +1,13 @@
 -module(store_interface).
 
--export([write_item/1, write_item/2, write_type/1, write_property/1,
+-export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
   read_item/2, read_type/1, read_property/1, read_items_of_type/1,
   validate_item/2]).
 
 -include("../include/records.hrl").
+
+transaction(Fun) ->
+  store:transaction(Fun).
 
 read_item(ItemURI, TypeURI) ->
   Item = #item{properties=Properties} = store:read_item(ItemURI),
