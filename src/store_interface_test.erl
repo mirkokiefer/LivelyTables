@@ -1,9 +1,9 @@
 -module(store_interface_test).
--export([test/0]).
+-export([run/0]).
 
 -include("../include/records.hrl").
 
-test() ->
+run() ->
   {ok, success} = test_write_properties(),
   {ok, success} = test_write_invalid_items(),
   {ok, success} = test_write_valid_items(),

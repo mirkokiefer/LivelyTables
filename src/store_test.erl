@@ -1,10 +1,10 @@
 -module(store_test).
 
--export([test/0]).
+-export([run/0]).
 
 -include("../include/records.hrl").
 
-test() ->
+run() ->
   test_write_core(),
   test_write_types(),
   {ok, success}.
