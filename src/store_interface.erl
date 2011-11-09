@@ -2,7 +2,7 @@
 
 -export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
   read_item/2, read_type/1, read_property/1, read_items_of_type/1,
-  validate_item/1]).
+  validate/1]).
 
 -include("../include/records.hrl").
 
@@ -25,32 +25,34 @@ read_items_of_type(TypeURI) -> store:read_items_of_type(TypeURI).
 
 write_item(Item) -> write_item(Item, ?ITEM).
 
-write_item(Item, Type) ->
-  write(Item, Type, fun(FinalItem) -> FinalItem end).
+write_item(Item=#item{uri=URI}, Type) ->
+  OldItem = store:read_item(URI),
+  write(Item, OldItem, Type, fun(FinalItem) -> FinalItem end).
 
-write_type(Type) ->
-  write(utils:type2item(Type), ?TYPE, fun(FinalItem) -> utils:item2type(FinalItem) end).
+write_type(Type=#type{uri=URI}) ->
+  OldItem = store:read_type_item(URI),
+  write(utils:type2item(Type), OldItem, ?TYPE, fun(FinalItem) -> utils:item2type(FinalItem) end).
 
-write_property(Property) ->
-  write(utils:property2item(Property), ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
+write_property(Property=#property{uri=URI}) ->
+  OldItem = store:read_property_item(URI),
+  write(utils:property2item(Property), OldItem, ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
 
-write(Item, Type, ConversionFun) ->
-  MergedItem = merge_items(Item, Type),
-  case validate_item(MergedItem) of
+write(Item, OldItem, Type, ConversionFun) ->
+  MergedItem = merge(Item, OldItem, Type),
+  case validate(MergedItem) of
     {true, _} -> store:write_all([ConversionFun(MergedItem)]);
     {false, Errors} -> {error, Errors}
   end.
 
-merge_items(Item=#item{uri=URI, types=Types}, TypeURI) ->
-  case store:read_item(URI) of
-    undefined -> case lists:member(TypeURI, Types) of
+merge(Item=#item{types=Types}, undefined, TypeURI) ->
+  case lists:member(TypeURI, Types) of
       true -> Item;
       false -> Item#item{types=[TypeURI|Types]}
-    end;
-    OldItem -> merge_items(OldItem, Item, TypeURI)
-  end.
+  end;
 
-merge_items(OldItem, NewItem, NewType) ->
+merge(Item, OldItem, TypeURI) -> merge_items(Item, OldItem, TypeURI).
+
+merge_items(NewItem, OldItem, NewType) ->
   #item{label=OldLabel, types=OldTypes, properties=OldProperties} = OldItem,
   #item{label=NewLabel, types=NewTypes, properties=NewProperties} = NewItem,
   MergedLabel = case NewLabel of
@@ -75,6 +77,10 @@ merge_properties(OldProperties, NewProperties, LegalProperties) ->
     lists:member(URI, LegalProperties) == false
   ],
   LeftOutProps ++ NewProperties.
+
+validate(Type = #type{}) -> validate_item(utils:type2item(Type));
+validate(Property = #property{}) -> validate_item(utils:property2item(Property));
+validate(Item = #item{}) -> validate_item(Item).
 
 validate_item(Item) ->
   {ValidType, TypeErrors} = validate_type_requirements(Item),

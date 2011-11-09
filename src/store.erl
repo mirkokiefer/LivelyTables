@@ -1,8 +1,10 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0]).
--export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1, read_items_of_type/1,
-  read_types_of_item/1, read_direct_types_of_item/1, read_parents/1, read_direct_parents/1,
+-export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1,
+  read_type_item/1, read_property_item/1,
+  read_items_of_type/1, read_types_of_item/1, read_direct_types_of_item/1,
+  read_parents/1, read_direct_parents/1,
   read_subtypes/1]).
 
 -include("../include/records.hrl").
@@ -147,6 +149,18 @@ read_property(URI) ->
       #property{uri=URI, label=Label, types=Types, properties=Props, range=Range,
         arity=Arity, inverse=Inverse, optional=Optional};
     undefined -> undefined
+  end.
+
+read_type_item(URI) ->
+  case read_type(URI) of
+    undefined -> undefined;
+    Type -> utils:type2item(Type)
+  end.
+
+read_property_item(URI) ->
+  case read_property(URI) of
+    undefined -> undefined;
+    Property -> utils:property2item(Property)
   end.
 
 read_direct_types_of_item(ItemURI) ->
