@@ -111,10 +111,9 @@ validate_legal_property(LegalProperty, #item{properties=Properties}) ->
     end
   end.
 
-validate_properties(#item{label=Label, types=Types, properties=Properties}) ->
-  {Valid, Errors} = case {Label, Types} of
-    {undefined, _} -> {false, legal_property_missing(?PROPERTY_LABEL)};
-    {_, []} -> {false, legal_property_missing(?PROPERTY_TYPES)};
+validate_properties(#item{types=Types, properties=Properties}) ->
+  {Valid, Errors} = case Types of
+    [] -> {false, legal_property_missing(?PROPERTY_TYPES)};
     _ -> {true, []}
   end,
   {ValuesValid, ValuesErrors} = validate_property_values(Properties),
