@@ -4,6 +4,8 @@
 -include("../include/records.hrl").
 
 run() ->
+  test_validate_core(),
+  test_validate_sets(),
   {atomic, {ok, success}} = t(fun test_write_properties/0),
   {atomic, {ok, success}} = t(fun test_write_invalid_items/0),
   {atomic, {ok, success}} = t(fun test_write_valid_items/0),
@@ -11,6 +13,18 @@ run() ->
   {atomic, {ok, success}} = t(fun test_update_invalid_items/0),
   {atomic, {ok, success}} = t(fun test_composite_items/0),
   {ok, success}.
+
+test_validate_core() ->
+  {ok, success} = test_validate(test_data:core_types()),
+  {ok, success} = test_validate(test_data:core_properties()).
+
+test_validate_sets() ->
+  {ok, success} = test_validate(test_data:set_properties()),
+  {ok, success} = test_validate(test_data:set_types()).
+
+test_validate(Items) ->
+  Result = [store_interface:validate(Each) || Each <- Items],
+  check_each_valid(Result).
 
 test_write_properties() ->
   Result = [store_interface:write_property(Property) || Property <- test_data:properties()],
@@ -38,6 +52,12 @@ test_composite_items() ->
 
 check_each_result(Result) ->
   case lists:all(fun(Each) -> Each == {ok, success} end, Result) of
+    true -> {ok, success};
+    false -> {error, Result}
+  end.
+
+check_each_valid(Result) ->
+  case lists:all(fun(Each) -> Each == {true, []} end, Result) of
     true -> {ok, success};
     false -> {error, Result}
   end.
