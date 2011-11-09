@@ -1,6 +1,6 @@
 
 -module(store).
--export([init/0, reset/0, start/0, stop/0]).
+-export([init/0, reset/0, start/0, stop/0, clear/0]).
 -export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1,
   read_type_item/1, read_property_item/1,
   read_items_of_type/1, read_types_of_item/1, read_direct_types_of_item/1,
@@ -13,6 +13,7 @@
 
 -define(DB_PATH, "../output/tuples.tab").
 
+-define(TABLES, [item_table, item_type_table, type_table, type_parent_table, property_table]).
 -record(item_table, {uri, label, properties=[]}).
 -record(item_type_table, {item, type}).
 -record(type_table, {uri, legal_properties=[]}).
@@ -54,11 +55,16 @@ create_tables() ->
     {disc_copies,[node()]}
   ]).
 
+% deletes and re-creates the schema
 reset() ->
   mnesia:stop(),
   mnesia:delete_schema([node()]),
   init(),
   start().
+
+% deletes all table entries
+clear() ->
+  [mnesia:clear_table(Tab) || Tab <- ?TABLES].
 
 start() ->
   mnesia:start(),
