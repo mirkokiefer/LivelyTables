@@ -1,6 +1,7 @@
 -module(utils).
--export([log/1, encode/1, set/1, item2type/1, type2item/1,
-  item2property/1, property2item/1,
+-export([log/1, encode/1, set/1, filter_element/2, is_disjoint/2,
+  item_property/2,
+  item2type/1, type2item/1, item2property/1, property2item/1,
   json/1, json2item/1, json2type/1, json2property/1]).
 
 -include("../include/records.hrl").
@@ -12,6 +13,23 @@ encode(String) ->
 
 set(List) ->
   sets:to_list(sets:from_list(List)).
+
+filter_element([First|Rest], ValidElements) ->
+  case lists:member(First, ValidElements) of
+    true -> First;
+    false -> filter_element(Rest, ValidElements)
+  end;
+
+filter_element([], _) -> undefined.
+
+is_disjoint(List1, List2) ->
+  sets:is_disjoint(sets:from_list(List1), sets:from_list(List2)).
+
+item_property(PropURI, #item{properties=Properties}) ->
+  case lists:keyfind(PropURI, 1, Properties) of
+    false -> undefined;
+    {_, Value} -> Value
+  end.
 
 item2type(#item{uri=URI, label=Label, properties=Properties}) ->
   item2type(Properties, #type{uri=URI, label=Label}).
@@ -81,24 +99,10 @@ struct(Item=#item{uri=URI}) ->
   ] ++ resolve_properties(Item#item.properties)};
 
 struct(Type=#type{}) ->
-  {struct, Properties} = struct(type2item(Type)),
-  {struct, Properties ++ [
-    {?PROPERTY_PARENTS, Type#type.parents},
-    {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
-  ]};
+  struct(type2item(Type));
 
 struct(Property=#property{}) ->
-  Properties =[
-    {?PROPERTY_RANGE, Property#property.range},
-    {?PROPERTY_ARITY, Property#property.arity},
-    {?PROPERTY_OPTIONAL, Property#property.optional}
-  ] ++ Property#property.properties,
-  NewProperties = case Property#property.inverse of
-    undefined -> Properties;
-    Value -> Properties ++ [{?PROPERTY_INVERSE, Value}]
-  end,
-  {struct, ItemProperties} = struct(property2item(Property)),
-  {struct, ItemProperties ++ NewProperties};
+  struct(property2item(Property));
 
 struct(Any) -> Any.
 
