@@ -30,17 +30,26 @@
 -define(SET_OPERATION, <<"set_operation">>).
 -define(INTERSECTION, <<"intersection">>).
 -define(UNION, <<"union">>).
+
+-define(TRANSFORM_SET, <<"set_transform">>).
+-define(TRANSFORM_VALUES_TO_ITEMS, <<"set_transform">>).
+-define(TRANSFORM_PROPERTIES_TO_ITEMS, <<"set_transform">>).
+-define(TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, <<"set_transform">>).
+
 -define(FILTER, <<"filter">>).
--define(PROPERTY_VALUE_FILTER, <<"property_value_filter">>).
--define(PROPERTY_EXISTENCE_FILTER, <<"property_existence_filter">>).
+-define(FILTER_ITEMS, <<"filter_items">>).
+-define(FILTER_PROPERTY_EXISTENCE, <<"property_existence_filter">>).
+-define(FILTER_PROPERTY_VALUE, <<"property_value_filter">>).
 -define(VALUE_CONDITION, <<"value_condition">>).
--define(VALUE_CONDITION_EXACT, <<"value_condition_exact">>).
+-define(CONDITION_EQUAL, <<"value_condition_exact">>).
 
 % Set Properties
--define(PROPERTY_SETS, <<"sets">>).
--define(PROPERTY_ON_PROPERTY, <<"on_property">>).
--define(PROPERTY_VALUE_CONDITION, <<"value_condition">>).
--define(PROPERTY_VALUE, <<"value">>).
+-define(PROPERTY_SETS, <<"property_sets">>).
+-define(PROPERTY_ITEMS, <<"property_items">>).
+-define(PROPERTY_SET, <<"property_set">>).
+-define(PROPERTY_PROPERTY_SET, <<"property_property_set">>).
+-define(PROPERTY_VALUE_CONDITION, <<"property_value_condition">>).
+-define(PROPERTY_VALUE, <<"property_value">>).
 
 -record(item, {uri, label, types=[], properties=[]}).
 -record(type, {uri, label, types=[?TYPE], properties=[], parents=[?ITEM], legal_properties=[]}).

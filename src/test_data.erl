@@ -1,6 +1,7 @@
 -module(test_data).
 -export([core_types/0, core_properties/0, set_properties/0, set_types/0, types/0, composite_items/0]).
 -export([items/0, properties/0, items_updated/0, invalid_items/0, invalid_items_updated/0, composite_items2/0]).
+-export([sample_set/0]).
 
 -include("../include/records.hrl").
 
@@ -36,28 +37,50 @@ core_properties() ->
 
 set_properties() ->
   Sets = #property{uri= ?PROPERTY_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-  OnProperty = #property{uri= ?PROPERTY_ON_PROPERTY, label= <<"On Property">>, range=?PROPERTY},
+  Items = #property{uri= ?PROPERTY_ITEMS, label= <<"ITEMS">>, range=?ITEM},
+  Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?PROPERTY},
+  PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property set">>, range=?PROPERTY},
   ValueCondition = #property{uri= ?PROPERTY_VALUE_CONDITION, label= <<"Value Condition">>, range=?VALUE_CONDITION},
   Value = #property{uri= ?PROPERTY_VALUE, label= <<"Value">>, range=?ITEM},
-  [Sets, OnProperty, ValueCondition, Value].
+  [Sets, Items, Set, PropertySet, ValueCondition, Value].
 
 
 set_types() ->
   Set = #type{uri= ?SET, label= <<"Set">>, legal_properties=[]},
+  [Set | set_operations() ++ set_transforms() ++ set_filters()].
+
+set_operations() ->
   SetOperation = #type{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
     legal_properties=[?PROPERTY_SETS]},
   Union = #type{uri= ?UNION, label= <<"Union">>, parents=[?SET_OPERATION], legal_properties=[]},
   Intersection = #type{uri= ?INTERSECTION, label= <<"Intersection">>, parents=[?SET_OPERATION], legal_properties=[]},
+  [SetOperation, Union, Intersection].
+
+set_transforms() ->
+  SetTransform = #type{uri= ?TRANSFORM_SET, label= <<"Set Transform">>,
+    parents=[?SET], legal_properties=[?PROPERTY_SET]},
+  ValuesToItems = #type{uri= ?TRANSFORM_VALUES_TO_ITEMS, label= <<"Property Values -> Items">>,
+    parents=[?TRANSFORM_SET], legal_properties=[?PROPERTY_PROPERTY_SET]},
+  PropertiesToPropertyItems = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Properties -> Property Items">>,
+    parents=[?TRANSFORM_SET], legal_properties=[]},
+  PropertyItemsToItems = #type{uri= ?TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, label= <<"Property Items -> Items">>,
+    parents=[?TRANSFORM_SET], legal_properties=[]},
+  [SetTransform, ValuesToItems, PropertiesToPropertyItems, PropertyItemsToItems].
+
+set_filters() ->
   Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[]},
-  PropertyExistenceFilter = #type{uri= ?PROPERTY_EXISTENCE_FILTER, label= <<"Property Existence Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ON_PROPERTY]},
-  PropertyValueFilter = #type{uri= ?PROPERTY_VALUE_FILTER, label= <<"Property Value Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ON_PROPERTY, ?PROPERTY_VALUE_CONDITION]},
+  ItemFilter = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter">>,
+    parents=[?FILTER], legal_properties=[?PROPERTY_ITEMS]},
+  PropertyExistenceFilter = #type{uri= ?FILTER_PROPERTY_EXISTENCE, label= <<"Property Existence Filter">>,
+    parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET]},
+  PropertyValueFilter = #type{uri= ?FILTER_PROPERTY_VALUE, label= <<"Property Value Filter">>,
+    parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET, ?PROPERTY_VALUE_CONDITION]},
+
   ValueCondition = #type{uri= ?VALUE_CONDITION, label= <<"Value Condition">>, legal_properties=[]},
-  ValueConditionExact = #type{uri= ?VALUE_CONDITION_EXACT, label= <<"Value Condition Exact">>, parents=[?SET],
-    legal_properties=[?PROPERTY_VALUE]},
-  [Set, SetOperation, Union, Intersection, Filter, PropertyExistenceFilter, PropertyValueFilter,
-    ValueCondition, ValueConditionExact].
+  ConditionEqual = #type{uri= ?CONDITION_EQUAL, label= <<"Condition Equal">>,
+    parents=[?VALUE_CONDITION], legal_properties=[?PROPERTY_VALUE]},
+
+  [Filter, ItemFilter, PropertyExistenceFilter, PropertyValueFilter, ValueCondition, ConditionEqual].
 
 types() ->
   Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
@@ -139,3 +162,21 @@ composite_items2() ->
     ]}}
   ]},
   [Alex, Fred].
+
+sample_set() ->
+  Persons = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
+    {?PROPERTY_PROPERTY_SET, [?PROPERTY_PARENTS]},
+    {?PROPERTY_VALUE_CONDITION, #item{types=[?CONDITION_EQUAL], properties=[
+      {?PROPERTY_VALUE, <<"person">>}
+    ]}}
+  ]},
+  ValueCondition = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
+    {?PROPERTY_PROPERTY_SET, [<<"boss">>]},
+    {?PROPERTY_VALUE_CONDITION, #item{types=[?CONDITION_EQUAL], properties=[
+      {?PROPERTY_VALUE, <<"jim">>}
+    ]}}
+  ]},
+  Set = #item{uri= <<"sample_set">>, label= <<"Persons with Boss Jim">>, types=[?INTERSECTION], properties=[
+    {?PROPERTY_SETS, [Persons, ValueCondition]}
+  ]},
+  Set.
