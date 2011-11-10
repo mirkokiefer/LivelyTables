@@ -43,7 +43,7 @@ set_properties() ->
   PropertyList = #property{uri= ?PROPERTY_PROPERTY_LIST, label= <<"Property list">>, range=?PROPERTY,
     arity=?ARITY_MANY},
 
-  Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?PROPERTY},
+  Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?SET},
   TypeSet = #property{uri= ?PROPERTY_TYPE_SET, label= <<"Type set">>, range=?SET},
   ItemSet = #property{uri= ?PROPERTY_ITEM_SET, label= <<"Item set">>, range=?SET},
   PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property list">>, range=?SET},
@@ -56,7 +56,9 @@ set_properties() ->
 
 set_types() ->
   Set = #type{uri= ?SET, label= <<"Set">>, legal_properties=[]},
-  [Set | set_operations() ++ set_transforms() ++ set_filters()].
+  % a dummy item representing the project set:
+  Project = #item{uri= ?PROJECT_SET, types=[?SET], label= <<"Project set">>},
+  [Set, Project | set_operations() ++ set_transforms() ++ set_filters()].
 
 set_operations() ->
   SetOperation = #type{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
@@ -199,16 +201,16 @@ composite_items2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #item{types=[?FILTER_TYPES], properties=[
+  Persons = #item{types=[?FILTER_TYPES_LIST], properties=[
+    {?PROPERTY_SET, ?PROJECT_SET},
     {?PROPERTY_TYPE_LIST, [<<"person">>]}
   ]},
-  ValueCondition = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
+  Filtered = #item{uri= <<"sample_set">>, label= <<"Persons with boss Jim">>,
+    types=[?FILTER_PROPERTY_VALUE_LIST], properties=[
+    {?PROPERTY_SET, Persons},
     {?PROPERTY_PROPERTY_LIST, [<<"boss">>]},
     {?PROPERTY_VALUE_CONDITION, #item{types=[?CONDITION_EQUAL], properties=[
       {?PROPERTY_VALUE, <<"jim">>}
     ]}}
   ]},
-  Set = #item{uri= <<"sample_set">>, label= <<"Persons with Boss Jim">>, types=[?INTERSECTION], properties=[
-    {?PROPERTY_SETS, [Persons, ValueCondition]}
-  ]},
-  Set.
+  Filtered.
