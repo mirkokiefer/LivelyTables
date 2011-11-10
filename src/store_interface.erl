@@ -37,10 +37,13 @@ write_property(Property=#property{uri=URI}) ->
   OldItem = store:read_property_item(URI),
   write(utils:property2item(Property), OldItem, ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
 
-write(Item, OldItem, Type, ConversionFun) ->
+write(Item=#item{uri=URI}, OldItem, Type, ConversionFun) ->
   MergedItem = merge(Item, OldItem, Type),
   case validate(MergedItem) of
-    {true, _} -> store:write_all([ConversionFun(MergedItem)]);
+    {true, _} -> case URI of
+      undefined -> {false, legal_property_missing(<<"uri">>)};
+      _ -> store:write_all([ConversionFun(MergedItem)])
+    end;
     {false, Errors} -> {error, Errors}
   end.
 
@@ -112,12 +115,12 @@ validate_legal_property(LegalProperty, #item{properties=Properties}) ->
   end.
 
 validate_properties(#item{types=Types, properties=Properties}) ->
-  {Valid, Errors} = case Types of
+  {TypesExist, TypeErrors} = case Types of
     [] -> {false, legal_property_missing(?PROPERTY_TYPES)};
     _ -> {true, []}
   end,
   {ValuesValid, ValuesErrors} = validate_property_values(Properties),
-  {Valid and ValuesValid, Errors ++ ValuesErrors}.
+  {TypesExist and ValuesValid, TypeErrors ++ ValuesErrors}.
 
 validate_property_values(Properties) -> validate_property_values(Properties, {true, []}).
 
