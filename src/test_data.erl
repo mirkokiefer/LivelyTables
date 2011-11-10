@@ -37,13 +37,13 @@ core_properties() ->
 
 set_properties() ->
   Sets = #property{uri= ?PROPERTY_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-  TypeSet = #property{uri= ?PROPERTY_TYPE_SET, label= <<"Type set">>, range=?TYPE, arity=?ARITY_MANY},
-  ItemSet = #property{uri= ?PROPERTY_ITEM_SET, label= <<"Item set">>, range=?ITEM, arity=?ARITY_MANY},
+  TypeList = #property{uri= ?PROPERTY_TYPE_LIST, label= <<"Type set">>, range=?TYPE, arity=?ARITY_MANY},
+  ItemList = #property{uri= ?PROPERTY_ITEM_LIST, label= <<"Item set">>, range=?ITEM, arity=?ARITY_MANY},
   Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?PROPERTY},
   PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property set">>, range=?PROPERTY},
   ValueCondition = #property{uri= ?PROPERTY_VALUE_CONDITION, label= <<"Value Condition">>, range=?VALUE_CONDITION},
   Value = #property{uri= ?PROPERTY_VALUE, label= <<"Value">>, range=?ITEM},
-  [Sets, Set, TypeSet, ItemSet, PropertySet, ValueCondition, Value].
+  [Sets, Set, TypeList, ItemList, PropertySet, ValueCondition, Value].
 
 
 set_types() ->
@@ -71,9 +71,9 @@ set_transforms() ->
 set_filters() ->
   Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[]},
   TypeFilter = #type{uri= ?FILTER_TYPES, label= <<"Type Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_TYPE_SET]},
+    parents=[?FILTER], legal_properties=[?PROPERTY_TYPE_LIST]},
   ItemFilter = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ITEM_SET]},
+    parents=[?FILTER], legal_properties=[?PROPERTY_ITEM_LIST]},
   PropertyExistenceFilter = #type{uri= ?FILTER_PROPERTY_EXISTENCE, label= <<"Property Existence Filter">>,
     parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET]},
   PropertyValueFilter = #type{uri= ?FILTER_PROPERTY_VALUE, label= <<"Property Value Filter">>,
@@ -168,7 +168,7 @@ composite_items2() ->
 
 sample_set() ->
   Persons = #item{types=[?FILTER_TYPES], properties=[
-    {?PROPERTY_TYPE_SET, [<<"person">>]}
+    {?PROPERTY_TYPE_LIST, [<<"person">>]}
   ]},
   ValueCondition = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
     {?PROPERTY_PROPERTY_SET, [<<"boss">>]},

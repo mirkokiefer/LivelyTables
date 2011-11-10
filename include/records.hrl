@@ -46,8 +46,8 @@
 
 % Set Properties
 -define(PROPERTY_SETS, <<"property_sets">>).
--define(PROPERTY_TYPE_SET, <<"property_type_set">>).
--define(PROPERTY_ITEM_SET, <<"property_item_set">>).
+-define(PROPERTY_TYPE_LIST, <<"property_type_list">>).
+-define(PROPERTY_ITEM_LIST, <<"property_item_list">>).
 -define(PROPERTY_SET, <<"property_set">>).
 -define(PROPERTY_PROPERTY_SET, <<"property_property_set">>).
 -define(PROPERTY_VALUE_CONDITION, <<"property_value_condition">>).
