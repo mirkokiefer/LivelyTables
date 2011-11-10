@@ -172,7 +172,9 @@ read_property_item(URI) ->
 read_direct_types_of_item(ItemURI) ->
   [Type || #item_type_table{type=Type} <- read(item_type_table, ItemURI)].
 
-read_types_of_item(ItemURI) ->
+read_types_of_item(ItemURI) -> utils:set(read_types_of_item_internal(ItemURI)).
+
+read_types_of_item_internal(ItemURI) ->
   Types = read_direct_types_of_item(ItemURI),
   Types ++ lists:flatten([read_parents(Type) || Type <- Types]).
 
