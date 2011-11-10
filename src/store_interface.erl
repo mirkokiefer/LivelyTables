@@ -1,7 +1,8 @@
 -module(store_interface).
 
 -export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
-  read_item/2, read_type/1, read_property/1, read_items_of_type/1,
+  read_item/2, read_type/1, read_property/1, read_items_of_type/1, read_subtypes/1,
+  read_types_of_item/1,
   validate/1]).
 
 -include("../include/records.hrl").
@@ -22,6 +23,10 @@ read_type(TypeURI) -> store:read_type(TypeURI).
 read_property(PropertyURI) -> store:read_property(PropertyURI).
 
 read_items_of_type(TypeURI) -> store:read_items_of_type(TypeURI).
+
+read_subtypes(TypeURI) -> store:read_subtypes(TypeURI).
+
+read_types_of_item(ItemURI) -> store:read_types_of_item(ItemURI).
 
 write_item(Item) -> write_item(Item, ?ITEM).
 
