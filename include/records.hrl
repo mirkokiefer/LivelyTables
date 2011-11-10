@@ -32,9 +32,9 @@
 -define(UNION, <<"union">>).
 
 -define(TRANSFORM_SET, <<"set_transform">>).
--define(TRANSFORM_VALUES_TO_ITEMS, <<"set_transform">>).
--define(TRANSFORM_PROPERTIES_TO_ITEMS, <<"set_transform">>).
--define(TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, <<"set_transform">>).
+-define(TRANSFORM_VALUES_TO_ITEMS, <<"transform_values_to_items">>).
+-define(TRANSFORM_PROPERTIES_TO_ITEMS, <<"transform_properties_to_items">>).
+-define(TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, <<"transform_property_items_to_items">>).
 
 -define(FILTER, <<"filter">>).
 -define(FILTER_ITEMS, <<"filter_items">>).
