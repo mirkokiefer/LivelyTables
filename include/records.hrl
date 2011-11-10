@@ -27,6 +27,7 @@
 
 % Set Types
 -define(SET, <<"set">>).
+-define(PROJECT_SET, <<"project_set">>).
 -define(SET_OPERATION, <<"set_operation">>).
 -define(INTERSECTION, <<"intersection">>).
 -define(UNION, <<"union">>).
