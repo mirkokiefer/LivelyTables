@@ -99,7 +99,7 @@ write(#property{uri=URI, label=Label, types=Types, properties=Props, range=Range
       inverse=resolve(Inverse), optional=Optional}
     ]).
 
-% resolve embedded items to their URIs if they exist
+% resolve embedded items to their URIs if they exist and store them separately
 resolve([]) -> [];
 
 resolve([First|Rest]) ->
