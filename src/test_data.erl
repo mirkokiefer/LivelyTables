@@ -37,12 +37,13 @@ core_properties() ->
 
 set_properties() ->
   Sets = #property{uri= ?PROPERTY_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-  Items = #property{uri= ?PROPERTY_ITEMS, label= <<"ITEMS">>, range=?ITEM},
+  TypeSet = #property{uri= ?PROPERTY_TYPE_SET, label= <<"Type set">>, range=?TYPE, arity=?ARITY_MANY},
+  ItemSet = #property{uri= ?PROPERTY_ITEM_SET, label= <<"Item set">>, range=?ITEM, arity=?ARITY_MANY},
   Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?PROPERTY},
   PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property set">>, range=?PROPERTY},
   ValueCondition = #property{uri= ?PROPERTY_VALUE_CONDITION, label= <<"Value Condition">>, range=?VALUE_CONDITION},
   Value = #property{uri= ?PROPERTY_VALUE, label= <<"Value">>, range=?ITEM},
-  [Sets, Items, Set, PropertySet, ValueCondition, Value].
+  [Sets, Set, TypeSet, ItemSet, PropertySet, ValueCondition, Value].
 
 
 set_types() ->
@@ -69,8 +70,10 @@ set_transforms() ->
 
 set_filters() ->
   Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[]},
+  TypeFilter = #type{uri= ?FILTER_TYPES, label= <<"Type Filter">>,
+    parents=[?FILTER], legal_properties=[?PROPERTY_TYPE_SET]},
   ItemFilter = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ITEMS]},
+    parents=[?FILTER], legal_properties=[?PROPERTY_ITEM_SET]},
   PropertyExistenceFilter = #type{uri= ?FILTER_PROPERTY_EXISTENCE, label= <<"Property Existence Filter">>,
     parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET]},
   PropertyValueFilter = #type{uri= ?FILTER_PROPERTY_VALUE, label= <<"Property Value Filter">>,
@@ -80,7 +83,7 @@ set_filters() ->
   ConditionEqual = #type{uri= ?CONDITION_EQUAL, label= <<"Condition Equal">>,
     parents=[?VALUE_CONDITION], legal_properties=[?PROPERTY_VALUE]},
 
-  [Filter, ItemFilter, PropertyExistenceFilter, PropertyValueFilter, ValueCondition, ConditionEqual].
+  [Filter, TypeFilter, ItemFilter, PropertyExistenceFilter, PropertyValueFilter, ValueCondition, ConditionEqual].
 
 types() ->
   Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
@@ -164,11 +167,8 @@ composite_items2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
-    {?PROPERTY_PROPERTY_SET, [?PROPERTY_PARENTS]},
-    {?PROPERTY_VALUE_CONDITION, #item{types=[?CONDITION_EQUAL], properties=[
-      {?PROPERTY_VALUE, <<"person">>}
-    ]}}
+  Persons = #item{types=[?FILTER_TYPES], properties=[
+    {?PROPERTY_TYPE_SET, [<<"person">>]}
   ]},
   ValueCondition = #item{types=[?FILTER_PROPERTY_VALUE], properties=[
     {?PROPERTY_PROPERTY_SET, [<<"boss">>]},

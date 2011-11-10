@@ -37,6 +37,7 @@
 -define(TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, <<"transform_property_items_to_items">>).
 
 -define(FILTER, <<"filter">>).
+-define(FILTER_TYPES, <<"filter_types">>).
 -define(FILTER_ITEMS, <<"filter_items">>).
 -define(FILTER_PROPERTY_EXISTENCE, <<"property_existence_filter">>).
 -define(FILTER_PROPERTY_VALUE, <<"property_value_filter">>).
@@ -45,7 +46,8 @@
 
 % Set Properties
 -define(PROPERTY_SETS, <<"property_sets">>).
--define(PROPERTY_ITEMS, <<"property_items">>).
+-define(PROPERTY_TYPE_SET, <<"property_type_set">>).
+-define(PROPERTY_ITEM_SET, <<"property_item_set">>).
 -define(PROPERTY_SET, <<"property_set">>).
 -define(PROPERTY_PROPERTY_SET, <<"property_property_set">>).
 -define(PROPERTY_VALUE_CONDITION, <<"property_value_condition">>).
