@@ -99,7 +99,7 @@ write(#property{uri=URI, label=Label, types=Types, properties=Props, range=Range
       inverse=resolve(Inverse), optional=Optional}
     ]).
 
-
+% resolve embedded items to their URIs if they exist
 resolve([]) -> [];
 
 resolve([First|Rest]) ->
@@ -185,10 +185,8 @@ read_direct_items_of_type(TypeURI) ->
   [Item || #item_type_table{item=Item} <- Records].
 
 read_parents(TypeURI) ->
-  case read_direct_parents(TypeURI) of
-    [] -> [];
-    Parents -> Parents ++ lists:flatten([read_parents(Parent) || Parent <- Parents])
-  end.
+  DirectParents = read_direct_parents(TypeURI),
+  DirectParents ++ lists:flatten([read_parents(Parent) || Parent <- DirectParents]).
 
 read_direct_parents(TypeURI) ->
   [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, TypeURI)].
