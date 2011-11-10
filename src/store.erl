@@ -177,10 +177,12 @@ read_types_of_item(ItemURI) ->
   Types ++ lists:flatten([read_parents(Type) || Type <- Types]).
 
 read_items_of_type(TypeURI) ->
+  lists:flatten([read_direct_items_of_type(Each) || Each <- [TypeURI|read_subtypes(TypeURI)]]).
+
+read_direct_items_of_type(TypeURI) ->
   F = fun() -> mnesia:index_read(item_type_table, TypeURI, #item_type_table.type) end,
   {atomic, Records} = mnesia:transaction(F),
-  Items = [Item || #item_type_table{item=Item} <- Records],
-  Items ++ lists:flatten([read_items_of_type(Subtype) || Subtype <- read_subtypes(TypeURI)]).
+  [Item || #item_type_table{item=Item} <- Records].
 
 read_parents(TypeURI) ->
   case read_direct_parents(TypeURI) of
@@ -192,6 +194,10 @@ read_direct_parents(TypeURI) ->
   [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, TypeURI)].
 
 read_subtypes(TypeURI) ->
+  DirectSubtypes = read_direct_subtypes(TypeURI),
+  DirectSubtypes ++ lists:flatten([read_subtypes(Each) || Each <- DirectSubtypes]).
+
+read_direct_subtypes(TypeURI) ->
   F = fun() -> mnesia:index_read(type_parent_table, TypeURI, #type_parent_table.parent) end,
   {atomic, Records} = mnesia:transaction(F),
   [Subtype || #type_parent_table{type=Subtype} <- Records].
