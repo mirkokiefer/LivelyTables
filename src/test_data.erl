@@ -86,7 +86,7 @@ set_filters() ->
   ]},
 
   Condition = #type{uri= ?CONDITION, label= <<"Property Condition">>, parents=[?SET], legal_properties=[
-    ?PROPERTY_SET
+    ?PROPERTY_PROPERTY_SET
   ]},
 
   PropertyExists = #type{uri= ?PROPERTY_EXISTS_CONDITION, label= <<"Property exists">>, parents=[?CONDITION]},
@@ -179,15 +179,18 @@ composite_items2() ->
 
 sample_set() ->
   Persons = #item{types=[?TRANSFORM_TYPES_TO_ITEMS], properties=[
-    {?PROPERTY_SET, item_list([<<"person">>])}
+    {?PROPERTY_SET, item_list([<<"employee">>])}
+  ]},
+  PropertyExists = #item{types=[?PROPERTY_EXISTS_CONDITION], properties=[
+    {?PROPERTY_PROPERTY_SET, item_list([<<"boss">>])}
   ]},
   PropertyCondition = #item{types=[?VALUE_CONDITION_EQUALS], properties=[
-    {?PROPERTY_SET, item_list([<<"boss">>])},
+    {?PROPERTY_PROPERTY_SET, item_list([<<"boss">>])},
     {?PROPERTY_VALUE, <<"jim">>}
   ]},
   #item{uri= <<"sample_set">>, label= <<"Persons with boss Jim">>, types=[?FILTER], properties=[
     {?PROPERTY_SET, Persons},
-    {?PROPERTY_CONDITIONS, [PropertyCondition]}
+    {?PROPERTY_CONDITIONS, [PropertyExists, PropertyCondition]}
   ]}.
 
 item_list(Items) ->
