@@ -5,7 +5,7 @@
   read_type_item/1, read_property_item/1,
   read_items_of_type/1, read_types_of_item/1, read_direct_types_of_item/1,
   read_parents/1, read_direct_parents/1,
-  read_subtypes/1]).
+  read_subtypes/1, read_direct_subtypes/1]).
 
 -include("../include/records.hrl").
 
