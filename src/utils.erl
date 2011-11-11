@@ -1,5 +1,5 @@
 -module(utils).
--export([log/1, encode/1, set/1, filter_element/2, is_disjoint/2,
+-export([log/1, encode/1, set/1, filter_element/2, is_joint/2, is_disjoint/2,
   item_property/2,
   item2type/1, type2item/1, item2property/1, property2item/1,
   json/1, json2item/1, json2type/1, json2property/1]).
@@ -21,6 +21,8 @@ filter_element([First|Rest], ValidElements) ->
   end;
 
 filter_element([], _) -> undefined.
+
+is_joint(List1, List2) -> is_disjoint(List1, List2) == false.
 
 is_disjoint(List1, List2) ->
   sets:is_disjoint(sets:from_list(List1), sets:from_list(List2)).
