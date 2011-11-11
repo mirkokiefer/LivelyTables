@@ -1,7 +1,8 @@
 -module(store_interface).
 
 -export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
-  read_item/2, read_type/1, read_property/1, read_items_of_type/1, read_subtypes/1,
+  read_item/1, read_item/2, read_type/1, read_property/1,
+  read_items_of_type/1, read_subtypes/1, read_direct_subtypes/1, read_parents/1,
   read_types_of_item/1,
   validate/1]).
 
@@ -9,6 +10,10 @@
 
 transaction(Fun) ->
   store:transaction(Fun).
+
+read_item(Item=#item{}) -> Item;
+
+read_item(ItemURI) -> store:read_item(ItemURI).
 
 read_item(ItemURI, TypeURI) ->
   Item = #item{properties=Properties} = store:read_item(ItemURI),
@@ -25,6 +30,10 @@ read_property(PropertyURI) -> store:read_property(PropertyURI).
 read_items_of_type(TypeURI) -> store:read_items_of_type(TypeURI).
 
 read_subtypes(TypeURI) -> store:read_subtypes(TypeURI).
+
+read_direct_subtypes(TypeURI) -> store:read_direct_subtypes(TypeURI).
+
+read_parents(TypeURI) -> store:read_parents(TypeURI).
 
 read_types_of_item(ItemURI) -> store:read_types_of_item(ItemURI).
 
