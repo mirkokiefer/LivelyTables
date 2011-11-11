@@ -37,28 +37,25 @@ core_properties() ->
 
 set_properties() ->
   Sets = #property{uri= ?PROPERTY_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-
-  TypeList = #property{uri= ?PROPERTY_TYPE_LIST, label= <<"Type list">>, range=?TYPE, arity=?ARITY_MANY},
-  ItemList = #property{uri= ?PROPERTY_ITEM_LIST, label= <<"Item list">>, range=?ITEM, arity=?ARITY_MANY},
-  PropertyList = #property{uri= ?PROPERTY_PROPERTY_LIST, label= <<"Property list">>, range=?PROPERTY,
-    arity=?ARITY_MANY},
-
   Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?SET},
-  TypeSet = #property{uri= ?PROPERTY_TYPE_SET, label= <<"Type set">>, range=?SET},
-  ItemSet = #property{uri= ?PROPERTY_ITEM_SET, label= <<"Item set">>, range=?SET},
-  PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property list">>, range=?SET},
+  Items = #property{uri= ?PROPERTY_ITEMS, label= <<"Items">>, range=?ITEM, arity=?ARITY_MANY},
 
-  ValueCondition = #property{uri= ?PROPERTY_VALUE_CONDITION, label= <<"Value Condition">>, range=?VALUE_CONDITION},
+  PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property set">>, range=?SET},
+
+  Conditions = #property{uri= ?PROPERTY_CONDITIONS, label= <<"Property Conditions">>,
+    range=?CONDITION, arity=?ARITY_MANY},
   Value = #property{uri= ?PROPERTY_VALUE, label= <<"Value">>, range=?ITEM},
 
-  [Sets, TypeList, ItemList, PropertyList, Set, TypeSet, ItemSet, PropertySet, ValueCondition, Value].
+  [Sets, Set, Items, PropertySet, Conditions, Value].
 
 
 set_types() ->
   Set = #type{uri= ?SET, label= <<"Set">>, legal_properties=[]},
+  ItemList = #type{uri= ?ITEM_LIST, label= <<"Item list">>,
+    parents=[?SET], legal_properties=[?PROPERTY_ITEMS]},
   % a dummy item representing the project set:
   Project = #item{uri= ?PROJECT_SET, types=[?SET], label= <<"Project set">>},
-  [Set, Project | set_operations() ++ set_transforms() ++ set_filters()].
+  [Set, ItemList, Project | set_operations() ++ set_transforms() ++ set_filters()].
 
 set_operations() ->
   SetOperation = #type{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
@@ -68,56 +65,36 @@ set_operations() ->
   [SetOperation, Union, Intersection].
 
 set_transforms() ->
-  SetTransform = #type{uri= ?TRANSFORM_SET, label= <<"Set Transform">>,
-    parents=[?SET], legal_properties=[?PROPERTY_SET]},
-  ValuesToItems = #type{uri= ?TRANSFORM_VALUES_TO_ITEMS, label= <<"Property Values -> Items">>,
-    parents=[?TRANSFORM_SET], legal_properties=[?PROPERTY_PROPERTY_LIST]},
-  PropertiesToPropertyItems = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Properties -> Property Items">>,
+  SetTransform = #type{uri= ?TRANSFORM_SET, label= <<"Set Transform">>, parents=[?SET], legal_properties=[
+    ?PROPERTY_SET
+  ]},
+  ItemsToValues = #type{uri= ?TRANSFORM_ITEMS_TO_VALUES, label= <<"Items -> Values">>,
+    parents=[?TRANSFORM_SET], legal_properties=[?PROPERTY_PROPERTY_SET]},
+  ItemsToProperties = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Items -> Properties">>,
     parents=[?TRANSFORM_SET], legal_properties=[]},
-  PropertyItemsToItems = #type{uri= ?TRANSFORM_PROPERTY_ITEMS_TO_ITEMS, label= <<"Property Items -> Items">>,
+  PropertiesToItems = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Properties -> Items">>,
     parents=[?TRANSFORM_SET], legal_properties=[]},
-  [SetTransform, ValuesToItems, PropertiesToPropertyItems, PropertyItemsToItems].
+  TypesToItems = #type{uri= ?TRANSFORM_TYPES_TO_ITEMS, label= <<"Types -> Items">>,
+    parents=[?TRANSFORM_SET], legal_properties=[]},
+
+  [SetTransform, ItemsToValues, ItemsToProperties, PropertiesToItems, TypesToItems].
 
 set_filters() ->
-  Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[?PROPERTY_SET]},
+  Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[
+    ?PROPERTY_SET,
+    ?PROPERTY_CONDITIONS
+  ]},
 
-  TypeFilter = #type{uri= ?FILTER_TYPES, label= <<"Type Filter">>, parents=[?FILTER]},
-  TypeFilterList = #type{uri= ?FILTER_TYPES_LIST, label= <<"Type Filter List">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_TYPE_LIST]},
-  TypeFilterSet = #type{uri= ?FILTER_TYPES_SET, label= <<"Type Filter Set">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_TYPE_SET]},
+  Condition = #type{uri= ?CONDITION, label= <<"Property Condition">>, parents=[?SET], legal_properties=[
+    ?PROPERTY_SET
+  ]},
 
-  ItemFilter = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter">>,
-    parents=[?FILTER], legal_properties=[]},
-  ItemFilterList = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter List">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ITEM_LIST]},
-  ItemFilterSet = #type{uri= ?FILTER_ITEMS, label= <<"Item Filter Set">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_ITEM_SET]},
+  PropertyExists = #type{uri= ?PROPERTY_EXISTS_CONDITION, label= <<"Property exists">>, parents=[?CONDITION]},
+  ValueCondition = #type{uri= ?VALUE_CONDITION, label= <<"Value condition">>, parents=[?CONDITION]},
+  Equals = #type{uri= ?VALUE_CONDITION_EQUALS, label= <<"Value equals">>, parents=[?VALUE_CONDITION],
+    legal_properties=[?PROPERTY_VALUE]},
 
-  PropertyExistenceFilter = #type{uri= ?FILTER_PROPERTY_EXISTENCE, label= <<"Property Existence Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_LIST]},
-  PropertyExistenceFilterList = #type{uri= ?FILTER_PROPERTY_EXISTENCE_LIST,
-    label= <<"Property Existence Filter List">>, parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_LIST]},
-  PropertyExistenceFilterSet = #type{uri= ?FILTER_PROPERTY_EXISTENCE_SET,
-    label= <<"Property Existence Filter Set">>, parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET]},
-
-  PropertyValueFilter = #type{uri= ?FILTER_PROPERTY_VALUE, label= <<"Property Value Filter">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_VALUE_CONDITION]},
-  PropertyValueFilterList = #type{uri= ?FILTER_PROPERTY_VALUE_LIST, label= <<"Property Value Filter List">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_LIST]},
-  PropertyValueFilterSet = #type{uri= ?FILTER_PROPERTY_VALUE_SET, label= <<"Property Value Filter Set">>,
-    parents=[?FILTER], legal_properties=[?PROPERTY_PROPERTY_SET]},
-
-  ValueCondition = #type{uri= ?VALUE_CONDITION, label= <<"Value Condition">>, legal_properties=[]},
-  ConditionEqual = #type{uri= ?CONDITION_EQUAL, label= <<"Condition Equal">>,
-    parents=[?VALUE_CONDITION], legal_properties=[?PROPERTY_VALUE]},
-
-  [Filter, TypeFilter, TypeFilterList, TypeFilterSet,
-    ItemFilter, ItemFilterList, ItemFilterSet,
-    PropertyExistenceFilter, PropertyExistenceFilterList, PropertyExistenceFilterSet,
-    PropertyValueFilter, PropertyValueFilterList, PropertyValueFilterSet,
-    ValueCondition, ConditionEqual
-  ].
+  [Filter, Condition, PropertyExists, ValueCondition, Equals].
 
 types() ->
   Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
@@ -201,16 +178,17 @@ composite_items2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #item{types=[?FILTER_TYPES_LIST], properties=[
-    {?PROPERTY_SET, ?PROJECT_SET},
-    {?PROPERTY_TYPE_LIST, [<<"person">>]}
+  Persons = #item{types=[?TRANSFORM_TYPES_TO_ITEMS], properties=[
+    {?PROPERTY_SET, item_list([<<"person">>])}
   ]},
-  Filtered = #item{uri= <<"sample_set">>, label= <<"Persons with boss Jim">>,
-    types=[?FILTER_PROPERTY_VALUE_LIST], properties=[
+  PropertyCondition = #item{types=[?VALUE_CONDITION_EQUALS], properties=[
+    {?PROPERTY_SET, item_list([<<"boss">>])},
+    {?PROPERTY_VALUE, <<"jim">>}
+  ]},
+  #item{uri= <<"sample_set">>, label= <<"Persons with boss Jim">>, types=[?FILTER], properties=[
     {?PROPERTY_SET, Persons},
-    {?PROPERTY_PROPERTY_LIST, [<<"boss">>]},
-    {?PROPERTY_VALUE_CONDITION, #item{types=[?CONDITION_EQUAL], properties=[
-      {?PROPERTY_VALUE, <<"jim">>}
-    ]}}
-  ]},
-  Filtered.
+    {?PROPERTY_CONDITIONS, [PropertyCondition]}
+  ]}.
+
+item_list(Items) ->
+  #item{types=[?ITEM_LIST], properties=[{?PROPERTY_ITEMS, Items}]}.
