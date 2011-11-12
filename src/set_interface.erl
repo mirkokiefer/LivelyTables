@@ -1,62 +1,45 @@
 -module(set_interface).
--export([eval_set/1, set2records/1]).
+-export([eval/1, set2records/1]).
 
 -include("../include/records.hrl").
 
-eval_set(Set) ->
-  eval_set_type(set_type(?SET, Set), Set).
+eval(#union{sets=Sets}) ->
+  ItemSets = [sets:from_list(eval(Each)) || Each <- Sets],
+  sets:to_list(sets:union(ItemSets));
 
-eval_set_type(?SET_OPERATION, Set) ->
-  Sets = [sets:from_list(eval_set(Each)) || Each <- utils:item_property(?PROPERTY_SETS, Set)],
-  eval_set_operation(set_type(?SET_OPERATION, Set), Sets, Set);
+eval(#intersection{sets=Sets}) ->
+  ItemSets = [sets:from_list(eval(Each)) || Each <- Sets],
+  sets:to_list(sets:intersection(ItemSets));
 
-eval_set_type(?FILTER, Set) -> 
-  Conditions = utils:item_property(?PROPERTY_CONDITIONS, Set),
-  Items = eval_set(utils:item_property(?PROPERTY_SET, Set)),
-  [Item || Item <- Items, passes_conditions(Item, Conditions)];
+eval(#filter{set=Set, conditions=Conditions}) ->
+  [ItemURI || ItemURI <- eval(Set), passes_conditions(read_item(ItemURI), Conditions)];
 
-eval_set_type(?TRANSFORM_SET, Set) ->
-  Items = eval_set(utils:item_property(?PROPERTY_SET, Set)),
-  eval_set_transform(set_type(?TRANSFORM_SET, Set), Items, Set);
+eval(#items2values{items=Set, properties=Properties}) ->
+  lists:flatten([item_values(ItemURI, Properties) || ItemURI <- eval(Set)]);
 
-eval_set_type(?ITEM_LIST, Set) -> utils:item_property(?PROPERTY_ITEMS, Set).
+eval(#items2properties{items=Set}) ->
+  lists:flatten([item_properties(ItemURI) || ItemURI <- eval(Set)]);
 
-eval_set_operation(?UNION, Sets, _Set) -> sets:to_list(sets:union(Sets));
-
-eval_set_operation(?INTERSECTION, Sets, _Set) -> sets:to_list(sets:intersection(Sets)).
-
-eval_set_transform(?TRANSFORM_ITEMS_TO_VALUES, ItemURIs, TransformSet) ->
-  UsedProperties = eval_set(utils:item_property(?PROPERTY_PROPERTY_SET, TransformSet)),
-  lists:flatten([item_values(ItemURI, UsedProperties) || ItemURI <- ItemURIs]);
-
-eval_set_transform(?TRANSFORM_ITEMS_TO_PROPERTIES, ItemURIs, _TransformSet) ->
-  lists:flatten([item_properties(ItemURI) || ItemURI <- ItemURIs]);
-
-eval_set_transform(?TRANSFORM_PROPERTIES_TO_ITEMS, PropertyURIs, _TransformSet) ->
-  ValidTypes = utils:types_with_legal_properties(PropertyURIs),
+eval(#properties2items{properties=Set}) ->
+  ValidTypes = utils:types_with_legal_properties(eval(Set)),
   utils:set(lists:flatten([store_interface:read_items_of_type(Each) || Each <- ValidTypes]));
 
-eval_set_transform(?TRANSFORM_TYPES_TO_ITEMS, Types, _TransformSet) ->
-  utils:set(lists:flatten([store_interface:read_items_of_type(Type) || Type <- Types])).
+eval(#types2items{types=Set}) ->
+  utils:set(lists:flatten([store_interface:read_items_of_type(Type) || Type <- eval(Set)]));
 
-passes_conditions(ItemURI, Conditions) -> 
-  lists:all(fun(Condition) -> passes_condition(ItemURI, Condition) end, Conditions).
+eval(ItemList) -> ItemList.
 
-passes_condition(ItemURI, ConditionURI) ->
-  Condition = store_interface:read_item(ConditionURI),
-  Properties = eval_set(utils:item_property(?PROPERTY_PROPERTY_SET, Condition)),
-  Item = store_interface:read_item(ItemURI),
-  passes_condition(condition_type(Condition), Item, Properties, Condition).
+passes_conditions(Item, Conditions) -> 
+  lists:all(fun(Condition) -> passes_condition(Condition, Item) end, Conditions).
 
-passes_condition(?PROPERTY_EXISTS_CONDITION, #item{properties=Properties}, CheckProperties, _Condition) ->
+passes_condition(#property_exists{properties=RequiredProperties}, #item{properties=Properties}) ->
   PropertyList = [Property || {Property, _Value} <- Properties],
-  utils:is_joint(PropertyList, CheckProperties);
+  utils:is_joint(PropertyList, RequiredProperties);
 
-passes_condition(?VALUE_CONDITION_EQUALS, Item, CheckProperties, Condition) ->
-  Properties = [{Property, Value} || {Property, Value} <- Item#item.properties,
+passes_condition(#value_equals{properties=CheckProperties, value=ValidValue}, #item{properties=Properties}) ->
+  PropertiesToCheck = [{Property, Value} || {Property, Value} <- Properties,
     lists:member(Property, CheckProperties)],
-  ValidValue = utils:item_property(?PROPERTY_VALUE, Condition),
-  lists:all(fun({_Property, Value}) -> Value == ValidValue end, Properties).
+  lists:all(fun({_Property, Value}) -> Value == ValidValue end, PropertiesToCheck).
 
 item_values(ItemURI, UsedProperties) ->
   Item = store_interface:read_item(ItemURI),
@@ -65,6 +48,7 @@ item_values(ItemURI, UsedProperties) ->
 item_properties(ItemURI) ->
   #item{properties=Properties} = store_interface:read_item(ItemURI),
   [Property || {Property, _} <- Properties].
+
 
 % Set to records
 sets2records(Sets) -> [set2records(Set) || Set <- Sets].
@@ -128,3 +112,5 @@ set_type(Set, _Set=#item{types=Types}) ->
 
 condition_type(#item{types=Types}) ->
   utils:filter_element(Types, store_interface:read_subtypes(?CONDITION)).
+
+read_item(URI) -> store_interface:read_item(URI).
