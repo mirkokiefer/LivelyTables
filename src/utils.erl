@@ -1,6 +1,6 @@
 -module(utils).
--export([log/1, encode/1, set/1, filter_element/2, is_joint/2, is_disjoint/2,
-  item_property/2,
+-export([log/1, encode/1, set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
+  item_property/2, types_with_legal_properties/1,
   item2type/1, type2item/1, item2property/1, property2item/1,
   json/1, json2item/1, json2type/1, json2property/1]).
 
@@ -27,10 +27,23 @@ is_joint(List1, List2) -> is_disjoint(List1, List2) == false.
 is_disjoint(List1, List2) ->
   sets:is_disjoint(sets:from_list(List1), sets:from_list(List2)).
 
+is_subset(Subset, List) ->
+  sets:is_subset(sets:from_list(Subset), sets:from_list(List)).
+
 item_property(PropURI, #item{properties=Properties}) ->
   case lists:keyfind(PropURI, 1, Properties) of
     false -> undefined;
     {_, Value} -> Value
+  end.
+
+types_with_legal_properties(ValidLegalProps) -> types_with_legal_props(?ITEM, ValidLegalProps).
+
+types_with_legal_props(CurrentTypeURI, ValidLegalProps) ->
+  #type{legal_properties=LegalProps} = store_interface:read_type(CurrentTypeURI),
+  case utils:is_subset(ValidLegalProps, LegalProps) of
+    true -> [CurrentTypeURI];
+    false -> Subtypes = store_interface:read_direct_subtypes(CurrentTypeURI),
+      lists:flatten([types_with_legal_props(Subtype, ValidLegalProps) || Subtype <- Subtypes])
   end.
 
 item2type(#item{uri=URI, label=Label, properties=Properties}) ->

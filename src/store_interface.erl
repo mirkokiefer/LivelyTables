@@ -3,7 +3,7 @@
 -export([transaction/1, write_item/1, write_item/2, write_type/1, write_property/1,
   read_item/1, read_item/2, read_type/1, read_property/1,
   read_items_of_type/1, read_subtypes/1, read_direct_subtypes/1, read_parents/1,
-  read_types_of_item/1,
+  read_types_of_item/1, read_legal_properties_of_type/1,
   validate/1]).
 
 -include("../include/records.hrl").
@@ -36,6 +36,10 @@ read_direct_subtypes(TypeURI) -> store:read_direct_subtypes(TypeURI).
 read_parents(TypeURI) -> store:read_parents(TypeURI).
 
 read_types_of_item(ItemURI) -> store:read_types_of_item(ItemURI).
+
+read_legal_properties_of_type(TypeURI) ->
+  TypeChain = [read_type(URI) || URI <- [TypeURI | read_parents(TypeURI)]],
+  lists:flatten([LegalProps || #type{legal_properties=LegalProps} <- TypeChain]).
 
 write_item(Item) -> write_item(Item, ?ITEM).
 

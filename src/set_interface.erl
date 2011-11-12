@@ -32,10 +32,9 @@ eval_set_transform(?TRANSFORM_ITEMS_TO_VALUES, ItemURIs, TransformSet) ->
 eval_set_transform(?TRANSFORM_ITEMS_TO_PROPERTIES, ItemURIs, _TransformSet) ->
   lists:flatten([item_properties(ItemURI) || ItemURI <- ItemURIs]);
 
-%eval_set_transform(?TRANSFORM_PROPERTIES_TO_ITEMS, PropertyURIs, _TransformSet) ->
-%  AllTypes = [store_interface:read_type(URI) || URI <- store_interface:read_subtypes(?ITEM)],
-%  [Type || Type = #type{legal_properties=LegalProps} <- AllTypes, lists:member(
-  
+eval_set_transform(?TRANSFORM_PROPERTIES_TO_ITEMS, PropertyURIs, _TransformSet) ->
+  ValidTypes = utils:types_with_legal_properties(PropertyURIs),
+  utils:set(lists:flatten([store_interface:read_items_of_type(Each) || Each <- ValidTypes]));
 
 eval_set_transform(?TRANSFORM_TYPES_TO_ITEMS, Types, _TransformSet) ->
   utils:set(lists:flatten([store_interface:read_items_of_type(Type) || Type <- Types])).
@@ -74,5 +73,3 @@ set_type(Set, _Set=#item{types=Types}) ->
 
 condition_type(#item{types=Types}) ->
   utils:filter_element(Types, store_interface:read_subtypes(?CONDITION)).
-
-read_items(ItemURIs) -> [store_interface:read_item(URI) || URI <- ItemURIs].
