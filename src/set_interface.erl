@@ -1,14 +1,17 @@
 -module(set_interface).
--export([eval/1, set2records/1]).
+-export([eval/1, eval_set_item/1]).
 
 -include("../include/records.hrl").
 
+eval_set_item(Set) ->
+  eval(set_utils:set2records(Set)).
+
 eval(#union{sets=Sets}) ->
-  ItemSets = [sets:from_list(eval(Each)) || Each <- Sets],
+  ItemSets = sets2erlang_sets(Sets),
   sets:to_list(sets:union(ItemSets));
 
 eval(#intersection{sets=Sets}) ->
-  ItemSets = [sets:from_list(eval(Each)) || Each <- Sets],
+  ItemSets = sets2erlang_sets(Sets),
   sets:to_list(sets:intersection(ItemSets));
 
 eval(#filter{set=Set, conditions=Conditions}) ->
@@ -41,6 +44,8 @@ passes_condition(#value_equals{properties=CheckProperties, value=ValidValue}, #i
     lists:member(Property, CheckProperties)],
   lists:all(fun({_Property, Value}) -> Value == ValidValue end, PropertiesToCheck).
 
+
+% utility functions
 item_values(ItemURI, UsedProperties) ->
   Item = store_interface:read_item(ItemURI),
   [Value || {Property, Value} <- Item#item.properties, lists:member(Property, UsedProperties)].
@@ -49,68 +54,6 @@ item_properties(ItemURI) ->
   #item{properties=Properties} = store_interface:read_item(ItemURI),
   [Property || {Property, _} <- Properties].
 
-
-% Set to records
-sets2records(Sets) -> [set2records(Set) || Set <- Sets].
-
-set2records(Set) ->
-  set2records(set_type(?SET, Set), Set).
-
-set2records(?SET_OPERATION, Set) ->
-  Sets = utils:item_property(?PROPERTY_SETS, Set),
-  set_operation2records(set_type(?SET_OPERATION, Set), sets2records(Sets), Set);
-
-set2records(?FILTER, Set) ->
-  Conditions = utils:item_property(?PROPERTY_CONDITIONS, Set),
-  FilterSet = utils:item_property(?PROPERTY_SET, Set),
-  #filter{set=set2records(FilterSet), conditions=conditions2records(Conditions)};
-
-set2records(?TRANSFORM_SET, Set) ->
-  TransformSet = utils:item_property(?PROPERTY_SET, Set),
-  set_transform2records(set_type(?TRANSFORM_SET, Set), set2records(TransformSet), Set);
-
-set2records(?ITEM_LIST, Set) -> utils:item_property(?PROPERTY_ITEMS, Set).
-
-set_operation2records(?UNION, SetRecords, _Set) ->
-  #union{sets=SetRecords};
-
-set_operation2records(?INTERSECTION, SetRecords, _Set) ->
-  #intersection{sets=SetRecords}.
-
-set_transform2records(?TRANSFORM_ITEMS_TO_VALUES, TransformSet, Set) ->
-  PropertySet = utils:item_property(?PROPERTY_PROPERTY_SET, Set),
-  #items2values{items=TransformSet, properties=set2records(PropertySet)};
-
-set_transform2records(?TRANSFORM_ITEMS_TO_PROPERTIES, TransformSet, _Set) ->
-  #items2properties{items=TransformSet};
-
-set_transform2records(?TRANSFORM_PROPERTIES_TO_ITEMS, TransformSet, _Set) ->
-  #properties2items{properties=TransformSet};
-
-set_transform2records(?TRANSFORM_TYPES_TO_ITEMS, TransformSet, _Set) ->
-  #types2items{types=TransformSet}.
-
-conditions2records(Conditions) ->
-  [condition2record(Condition) || Condition <- Conditions].
-
-condition2record(ConditionURI) ->
-  Condition = store_interface:read_item(ConditionURI),
-  Properties = utils:item_property(?PROPERTY_PROPERTY_SET, Condition),
-  condition2record(condition_type(Condition), set2records(Properties), Condition).
-
-condition2record(?VALUE_CONDITION_EQUALS, Properties, Condition) ->
-  Value = utils:item_property(?PROPERTY_VALUE, Condition),
-  #value_equals{properties=Properties, value=Value};
-
-condition2record(?PROPERTY_EXISTS_CONDITION, Properties, _Condition) ->
-  #property_exists{properties=Properties}.
-
-% utility functions
-set_type(Set, _Set=#item{types=Types}) ->
-  TypeChain = Types ++ lists:flatten([store_interface:read_parents(Type) || Type <- Types]),
-  utils:filter_element(TypeChain, store_interface:read_direct_subtypes(Set)).
-
-condition_type(#item{types=Types}) ->
-  utils:filter_element(Types, store_interface:read_subtypes(?CONDITION)).
-
 read_item(URI) -> store_interface:read_item(URI).
+
+sets2erlang_sets(Sets) -> [sets:from_list(eval(Each)) || Each <- Sets].
