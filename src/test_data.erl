@@ -1,7 +1,7 @@
 -module(test_data).
 -export([core_types/0, core_properties/0, set_properties/0, set_types/0, types/0, composite_items/0]).
 -export([items/0, properties/0, items_updated/0, invalid_items/0, invalid_items_updated/0, composite_items2/0]).
--export([sample_set/0]).
+-export([sample_set/0, record_set/0]).
 
 -include("../include/records.hrl").
 
@@ -188,10 +188,23 @@ sample_set() ->
     {?PROPERTY_PROPERTY_SET, item_list([<<"boss">>])},
     {?PROPERTY_VALUE, <<"jim">>}
   ]},
-  #item{uri= <<"sample_set">>, label= <<"Persons with boss Jim">>, types=[?FILTER], properties=[
+  BossJim = #item{label= <<"Persons with boss Jim">>, types=[?FILTER], properties=[
     {?PROPERTY_SET, Persons},
     {?PROPERTY_CONDITIONS, [PropertyExists, PropertyCondition]}
+  ]},
+  #item{uri= <<"sample_set">>, label= <<"Sample set">>, types=[?UNION], properties=[
+    {?PROPERTY_SETS, [
+      BossJim,
+      #item{types=[?ITEM_LIST], properties=[{?PROPERTY_ITEMS, [<<"jim">>]}]}
+    ]}
   ]}.
+
+record_set() ->
+  Persons = #types2items{types=[<<"employee">>]},
+  PropertyExists = #property_exists{properties=[<<"boss">>]},
+  PropertyConditions = #value_equals{properties= [<<"boss">>], value= <<"jim">>},
+  BossJim = #filter{set=Persons, conditions=[PropertyExists, PropertyConditions]},
+  #union{sets=[BossJim, [<<"jim">>]]}.
 
 item_list(Items) ->
   #item{types=[?ITEM_LIST], properties=[{?PROPERTY_ITEMS, Items}]}.

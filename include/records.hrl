@@ -58,3 +58,15 @@
 -record(type, {uri, label, types=[?TYPE], properties=[], parents=[?ITEM], legal_properties=[]}).
 -record(property, {uri, label, types=[?PROPERTY], properties=[], range=[?ITEM], arity=?ARITY_ONE,
   inverse, optional=false}).
+
+% Set records
+-record(union, {sets}).
+-record(intersection, {sets}).
+-record(filter, {set, conditions}).
+-record(items2values, {items, properties}).
+-record(items2properties, {items}).
+-record(properties2items, {properties}).
+-record(types2items, {types}).
+
+-record(value_equals, {properties, value}).
+-record(property_exists, {properties}).
