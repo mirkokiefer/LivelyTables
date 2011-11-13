@@ -1,10 +1,16 @@
 -module(utils).
--export([log/1, encode/1, set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
+-export([write_file/2, read_file/1, log/1, encode/1,
+  set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
   item_property/2, types_with_legal_properties/1,
+  item2propertylist/1, propertylist2item/1,
   item2type/1, type2item/1, item2property/1, property2item/1,
   json/1, json2item/1, json2type/1, json2property/1]).
 
 -include("../include/records.hrl").
+
+write_file(File, List) ->  {ok, S} = file:open(File, write),  lists:foreach(fun(X) -> io:format(S, "~p.~n",[X]) end, List), file:close(S).
+
+read_file(File) -> file:consult(File).
 
 log(Message) -> io:format("~p~n", [Message]).
 
@@ -45,6 +51,17 @@ types_with_legal_props(CurrentTypeURI, ValidLegalProps) ->
     false -> Subtypes = store_interface:read_direct_subtypes(CurrentTypeURI),
       lists:flatten([types_with_legal_props(Subtype, ValidLegalProps) || Subtype <- Subtypes])
   end.
+
+item2propertylist(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
+  [
+    {?URI, URI},
+    {?PROPERTY_LABEL, Label},
+    {?PROPERTY_TYPES, Types}
+  ] ++ Properties.
+
+propertylist2item([{_, URI}, {_, Label}, {_, Types}|Rest]) ->
+  #item{uri=URI, label=Label, types=Types, properties=Rest}.
+
 
 item2type(#item{uri=URI, label=Label, properties=Properties}) ->
   item2type(Properties, #type{uri=URI, label=Label}).
