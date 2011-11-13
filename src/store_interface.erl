@@ -43,24 +43,19 @@ read_legal_properties_of_type(TypeURI) ->
 
 write_item(Item) -> write_item(Item, ?ITEM).
 
-write_item(Item=#item{uri=URI}, Type) ->
-  OldItem = store:read_item(URI),
-  write(Item, OldItem, Type, fun(FinalItem) -> FinalItem end).
+write_item(Item=#item{}, Type) -> write(Item, Type).
 
-write_type(Type=#type{uri=URI}) ->
-  OldItem = store:read_item(URI),
-  write(utils:type2item(Type), OldItem, ?TYPE, fun(FinalItem) -> utils:item2type(FinalItem) end).
+write_type(Type=#type{}) -> write(utils:type2item(Type), ?TYPE).
 
-write_property(Property=#property{uri=URI}) ->
-  OldItem = store:read_item(URI),
-  write(utils:property2item(Property), OldItem, ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
+write_property(Property=#property{}) -> write(utils:property2item(Property), ?PROPERTY).
 
-write(Item=#item{uri=URI}, OldItem, Type, ConversionFun) ->
+write(Item=#item{uri=URI}, Type) ->
+  OldItem = store:read_item(URI),
   MergedItem = merge(Item, OldItem, Type),
   case validate(MergedItem) of
     {true, _} -> case URI of
       undefined -> {false, legal_property_missing(<<"uri">>)};
-      _ -> store:write_all([ConversionFun(MergedItem)])
+      _ -> store:write_all([MergedItem])
     end;
     {false, Errors} -> {error, Errors}
   end.
