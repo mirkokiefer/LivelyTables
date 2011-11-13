@@ -13,7 +13,7 @@ store_sample() ->
 test_set2record() ->
   SampleSet = test_data:sample_set(),
   RecordSet = test_data:record_set(),
-  RecordSet == set_interface:set2records(SampleSet).
+  RecordSet = set_utils:set2records(SampleSet).
 
 t(Fun) ->
   store_interface:transaction(Fun).
