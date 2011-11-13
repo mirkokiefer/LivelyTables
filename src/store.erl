@@ -2,7 +2,6 @@
 -module(store).
 -export([init/0, reset/0, start/0, stop/0, clear/0]).
 -export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1,
-  read_type_item/1, read_property_item/1,
   read_items_of_type/1, read_types_of_item/1, read_direct_types_of_item/1,
   read_parents/1, read_direct_parents/1,
   read_subtypes/1, read_direct_subtypes/1]).
@@ -13,12 +12,10 @@
 
 -define(DB_PATH, "../output/tuples.tab").
 
--define(TABLES, [item_table, item_type_table, type_table, type_parent_table, property_table]).
+-define(TABLES, [item_table, item_type_table, type_parent_table]).
 -record(item_table, {uri, label, properties=[]}).
 -record(item_type_table, {item, type}).
--record(type_table, {uri, legal_properties=[]}).
 -record(type_parent_table, {type, parent}).
--record(property_table, {uri, range, arity=one, inverse, optional}).
 
 init() ->
   mnesia:create_schema([node()]),
@@ -38,21 +35,11 @@ create_tables() ->
     {disc_copies,[node()]},
     {index, [type]}
   ]),
-  mnesia:create_table(type_table, [
-    {attributes, record_info(fields, type_table)},
-    {type, set},
-    {disc_copies,[node()]}
-  ]),
   mnesia:create_table(type_parent_table, [
     {attributes, record_info(fields, type_parent_table)},
     {type, bag},
     {disc_copies,[node()]},
     {index, [parent]}
-  ]),
-  mnesia:create_table(property_table, [
-    {attributes, record_info(fields, property_table)},
-    {type, set},
-    {disc_copies,[node()]}
   ]).
 
 % deletes and re-creates the schema
@@ -68,8 +55,7 @@ clear() ->
 
 start() ->
   mnesia:start(),
-  Tables = [item_table, item_type_table, type_table, type_parent_table, property_table],
-  mnesia:wait_for_tables(Tables, 20000).
+  mnesia:wait_for_tables(?TABLES, 20000).
 
 stop() ->
   mnesia:stop().
@@ -81,23 +67,23 @@ write_all(Records) ->
   [write(Record) || Record <- Records],
   {ok, success}.
 
-write(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
+write(Item=#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
   ItemTableRecord = #item_table{uri=URI, label=Label, properties=resolve_properties(Properties)},
   ItemTypeTableRecords = [#item_type_table{item=URI, type=resolve(Type)} || Type <- Types],
-  store_table_records([ItemTableRecord|ItemTypeTableRecords]);
+  TypeParentTableRecords = type_parent_table_records(Item),
+  store_table_records([ItemTableRecord] ++ ItemTypeTableRecords ++ TypeParentTableRecords);
 
-write(#type{uri=URI, label=Label, types=Types, properties=Props, parents=Parents, legal_properties=LegalProps}) ->
-  write(#item{uri=URI, label=Label, types=Types, properties=Props}),
-  TypeTableRecord = #type_table{uri=URI, legal_properties=resolve(LegalProps)},
-  TypeParentTableRecords = [#type_parent_table{type=URI, parent=resolve(Parent)} || Parent <- Parents],
-  store_table_records([TypeTableRecord|TypeParentTableRecords]);
+write(Type=#type{}) ->
+  write(utils:type2item(Type));
 
-write(#property{uri=URI, label=Label, types=Types, properties=Props, range=Range,
-  arity=Arity, inverse=Inverse, optional=Optional}) ->
-    write(#item{uri=URI, label=Label, types=Types, properties=Props}),
-    store_table_records([#property_table{uri=URI, range=resolve(Range), arity=Arity,
-      inverse=resolve(Inverse), optional=Optional}
-    ]).
+write(Property=#property{}) ->
+    write(utils:property2item(Property)).
+
+type_parent_table_records(Item=#item{uri=URI}) ->
+  case utils:item_property(?PROPERTY_PARENTS, Item) of
+    undefined -> [];
+    Parents -> [#type_parent_table{type=URI, parent=resolve(Parent)} || Parent <- Parents]
+  end.
 
 % resolve embedded items to their URIs if they exist and store them separately
 resolve([]) -> [];
@@ -139,34 +125,19 @@ read_item(URI) ->
     [] -> undefined
   end.
 
+% Type "Item" doesn't have parents so we need to implement it explicitly
+read_type(?ITEM) -> utils:item2type(read_item(?ITEM));
 read_type(URI) ->
-  case read_item(URI) of
-    #item{uri=URI, label=Label, types=Types, properties=Props} ->
-      [#type_table{legal_properties=LegalProps}] = read(type_table, URI),
-      Parents = [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, URI)],
-      #type{uri=URI, label=Label, types=Types, properties=Props, parents=Parents, legal_properties=LegalProps};
-    undefined -> undefined
+  case {read_item(URI), read_direct_parents(URI)} of
+    {undefined, _} -> undefined;
+    {_Item, []} -> undefined;
+    {Item, _Parents} -> utils:item2type(Item)
   end.
 
 read_property(URI) ->
   case read_item(URI) of
-    #item{uri=URI, label=Label, types=Types, properties=Props} ->
-      [#property_table{range=Range, arity=Arity, inverse=Inverse, optional=Optional}] = read(property_table, URI),
-      #property{uri=URI, label=Label, types=Types, properties=Props, range=Range,
-        arity=Arity, inverse=Inverse, optional=Optional};
-    undefined -> undefined
-  end.
-
-read_type_item(URI) ->
-  case read_type(URI) of
     undefined -> undefined;
-    Type -> utils:type2item(Type)
-  end.
-
-read_property_item(URI) ->
-  case read_property(URI) of
-    undefined -> undefined;
-    Property -> utils:property2item(Property)
+    Item -> utils:item2property(Item)
   end.
 
 read_direct_types_of_item(ItemURI) ->

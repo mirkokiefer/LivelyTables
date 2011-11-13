@@ -43,10 +43,6 @@ get([<<"type">>, TypeID], _, Req) ->
   Type = store_interface:read_type(TypeID),
   send(Req, utils:json(Type));
 
-get([<<"property">>, URI], _, Req) ->
-  Property = store_interface:read_property(URI),
-  send(Req, utils:json(Property));
-
 get([<<"_file">>|FileTokens], _, Req) ->
   Path = lists:flatten(["/" ++ binary_to_list(Directory) || Directory <- FileTokens]),
   Directory = filename:dirname(Path),
@@ -67,12 +63,6 @@ put([<<"type">>, TypeID], _, Body, Req) ->
   Type = utils:json2type(Body),
   NewType = Type#type{uri=TypeID},
   {atomic, Response} = t(fun() -> store_interface:write_type(NewType) end),
-  send(Req, valid2json(Response));
-
-put([<<"property">>, PropertyID], _, Body, Req) ->
-  Property = utils:json2property(Body),
-  NewProperty = Property#property{uri=PropertyID},
-  {atomic, Response} = t(fun() -> store_interface:write_property(NewProperty) end),
   send(Req, valid2json(Response));
 
 put([TypeID, ItemID], _, Body, Req) ->

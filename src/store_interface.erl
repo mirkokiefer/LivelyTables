@@ -48,11 +48,11 @@ write_item(Item=#item{uri=URI}, Type) ->
   write(Item, OldItem, Type, fun(FinalItem) -> FinalItem end).
 
 write_type(Type=#type{uri=URI}) ->
-  OldItem = store:read_type_item(URI),
+  OldItem = store:read_item(URI),
   write(utils:type2item(Type), OldItem, ?TYPE, fun(FinalItem) -> utils:item2type(FinalItem) end).
 
 write_property(Property=#property{uri=URI}) ->
-  OldItem = store:read_property_item(URI),
+  OldItem = store:read_item(URI),
   write(utils:property2item(Property), OldItem, ?PROPERTY, fun(FinalItem) -> utils:item2property(FinalItem) end).
 
 write(Item=#item{uri=URI}, OldItem, Type, ConversionFun) ->
