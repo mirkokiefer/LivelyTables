@@ -130,11 +130,9 @@ struct(Item=#item{uri=URI}) ->
     {?PROPERTY_TYPES, Item#item.types}
   ] ++ resolve_properties(Item#item.properties)};
 
-struct(Type=#type{}) ->
-  struct(type2item(Type));
+struct(Type=#type{}) -> struct(type2item(Type));
 
-struct(Property=#property{}) ->
-  struct(property2item(Property));
+struct(Property=#property{}) -> struct(property2item(Property));
 
 struct(Any) -> Any.
 
