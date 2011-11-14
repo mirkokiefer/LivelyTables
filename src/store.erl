@@ -3,8 +3,8 @@
 -export([init/0, reset/0, start/0, stop/0, clear/0]).
 -export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
   read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
-  read_parents/1, read_direct_parents/1,
-  read_subtables/1, read_direct_subtables/1]).
+  read_subtables/1, read_direct_subtables/1,
+  read_tables_including/1, read_tables_including_directly/1]).
 
 -include("../include/records.hrl").
 
@@ -12,10 +12,10 @@
 
 -define(DB_PATH, "../output/tuples.tab").
 
--define(TABLES, [rows, rows2table, table2parents]).
+-define(TABLES, [rows, rows2table, table_includes]).
 -record(rows, {uri, label, coloumns=[]}).
 -record(rows2table, {row, table}).
--record(table2parents, {table, parent}).
+-record(table_includes, {table, included_table}).
 
 init() ->
   mnesia:create_schema([node()]),
@@ -35,11 +35,11 @@ create_tables() ->
     {disc_copies,[node()]},
     {index, [table]}
   ]),
-  mnesia:create_table(table2parents, [
-    {attributes, record_info(fields, table2parents)},
+  mnesia:create_table(table_includes, [
+    {attributes, record_info(fields, table_includes)},
     {type, bag},
     {disc_copies,[node()]},
-    {index, [parent]}
+    {index, [included_table]}
   ]).
 
 % deletes and re-creates the schema
@@ -72,7 +72,7 @@ write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
   #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
   RowTableRecord = #rows{uri=URI, label=Label, coloumns=ResolvedColoumns},
   RowTableTableRecords = [#rows2table{row=URI, table=Table} || Table <- ResolvedTables],
-  TableParentTableRecords = table2parents_records(Row),
+  TableParentTableRecords = table_includes_records(Row),
   git:write(ResolvedRow),
   store_table_records([RowTableRecord] ++ RowTableTableRecords ++ TableParentTableRecords);
 
@@ -82,10 +82,10 @@ write(Table=#table{}) ->
 write(Coloumn=#coloumn{}) ->
     write(utils:coloumn2row(Coloumn)).
 
-table2parents_records(Row=#row{uri=URI}) ->
+table_includes_records(Row=#row{uri=URI}) ->
   case utils:row_coloumn(?COLOUMN_PARENTS, Row) of
     undefined -> [];
-    Parents -> [#table2parents{table=URI, parent=resolve(Parent)} || Parent <- Parents]
+    Parents -> [#table_includes{table=URI, included_table=resolve(Parent)} || Parent <- Parents]
   end.
 
 % resolve embedded rows to their URIs if they exist and store them separately
@@ -128,10 +128,10 @@ read_row(URI) ->
     [] -> undefined
   end.
 
-% Table "Row" doesn't have parents so we need to implement it explicitly
+% Table "Row" doesn't have included_tables so we need to implement it explicitly
 read_table(?ROW) -> utils:row2table(read_row(?ROW));
 read_table(URI) ->
-  case {read_row(URI), read_direct_parents(URI)} of
+  case {read_row(URI), read_direct_subtables(URI)} of
     {undefined, _} -> undefined;
     {_Row, []} -> undefined;
     {Row, _Parents} -> utils:row2table(Row)
@@ -150,31 +150,31 @@ read_tables_of_row(RowURI) -> utils:set(read_tables_of_row_internal(RowURI)).
 
 read_tables_of_row_internal(RowURI) ->
   Tables = read_direct_tables_of_row(RowURI),
-  Tables ++ lists:flatten([read_parents(Table) || Table <- Tables]).
+  Tables ++ lists:flatten([read_subtables(Table) || Table <- Tables]).
 
 read_rows_of_table(TableURI) ->
-  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_subtables(TableURI)]]).
+  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_tables_including(TableURI)]]).
 
 read_direct_rows_of_table(TableURI) ->
   F = fun() -> mnesia:index_read(rows2table, TableURI, #rows2table.table) end,
   {atomic, Records} = mnesia:transaction(F),
   [Row || #rows2table{row=Row} <- Records].
 
-read_parents(TableURI) ->
-  DirectParents = read_direct_parents(TableURI),
-  DirectParents ++ lists:flatten([read_parents(Parent) || Parent <- DirectParents]).
-
-read_direct_parents(TableURI) ->
-  [Parent || #table2parents{parent=Parent} <- read(table2parents, TableURI)].
-
 read_subtables(TableURI) ->
-  DirectSubtables = read_direct_subtables(TableURI),
-  DirectSubtables ++ lists:flatten([read_subtables(Each) || Each <- DirectSubtables]).
+  DirectParents = read_direct_subtables(TableURI),
+  DirectParents ++ lists:flatten([read_subtables(Parent) || Parent <- DirectParents]).
 
 read_direct_subtables(TableURI) ->
-  F = fun() -> mnesia:index_read(table2parents, TableURI, #table2parents.parent) end,
+  [Parent || #table_includes{included_table=Parent} <- read(table_includes, TableURI)].
+
+read_tables_including(TableURI) ->
+  DirectSubtables = read_tables_including_directly(TableURI),
+  DirectSubtables ++ lists:flatten([read_tables_including(Each) || Each <- DirectSubtables]).
+
+read_tables_including_directly(TableURI) ->
+  F = fun() -> mnesia:index_read(table_includes, TableURI, #table_includes.included_table) end,
   {atomic, Records} = mnesia:transaction(F),
-  [Subtable || #table2parents{table=Subtable} <- Records].
+  [Subtable || #table_includes{table=Subtable} <- Records].
 
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,

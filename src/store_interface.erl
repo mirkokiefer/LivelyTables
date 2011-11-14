@@ -2,7 +2,7 @@
 
 -export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1,
   read_row/1, read_row/2, read_table/1, read_coloumn/1,
-  read_rows_of_table/1, read_subtables/1, read_direct_subtables/1, read_parents/1,
+  read_rows_of_table/1, read_tables_including/1, read_tables_including_directly/1, read_subtables/1,
   read_tables_of_row/1, read_legal_coloumns_of_table/1,
   validate/1]).
 
@@ -17,7 +17,7 @@ read_row(RowURI) -> store:read_row(RowURI).
 
 read_row(RowURI, TableURI) ->
   Row = #row{coloumns=Coloumns} = store:read_row(RowURI),
-  ParentTableURIs = [TableURI|store:read_parents(TableURI)],
+  ParentTableURIs = [TableURI|store:read_subtables(TableURI)],
   ParentTables = [store:read_table(URI) || URI <- ParentTableURIs],
   LegalProps = lists:flatten([Legal || #table{legal_coloumns=Legal} <- ParentTables]),
   FilteredProps = [Coloumn || Coloumn={URI,_} <- Coloumns, lists:member(URI, LegalProps)],
@@ -29,16 +29,16 @@ read_coloumn(ColoumnURI) -> store:read_coloumn(ColoumnURI).
 
 read_rows_of_table(TableURI) -> store:read_rows_of_table(TableURI).
 
+read_tables_including(TableURI) -> store:read_tables_including(TableURI).
+
+read_tables_including_directly(TableURI) -> store:read_tables_including_directly(TableURI).
+
 read_subtables(TableURI) -> store:read_subtables(TableURI).
-
-read_direct_subtables(TableURI) -> store:read_direct_subtables(TableURI).
-
-read_parents(TableURI) -> store:read_parents(TableURI).
 
 read_tables_of_row(RowURI) -> store:read_tables_of_row(RowURI).
 
 read_legal_coloumns_of_table(TableURI) ->
-  TableChain = [read_table(URI) || URI <- [TableURI | read_parents(TableURI)]],
+  TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],
   lists:flatten([LegalProps || #table{legal_coloumns=LegalProps} <- TableChain]).
 
 write_row(Row) -> write_row(Row, ?ROW).
@@ -104,7 +104,7 @@ validate_row(Row) ->
   {ValidTable and ValidColoumns, TableErrors++ColoumnErrors}.
 
 validate_table_requirements(Row=#row{tables=Tables}) ->
-  ParentTableURIs = utils:set(Tables ++ lists:flatten([store:read_parents(Table) || Table <- Tables])),
+  ParentTableURIs = utils:set(Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables])),
   ParentTables = [store:read_table(Each) || Each <- ParentTableURIs],
   Results = [validate_legal_coloumns(LegalProps, Row) || #table{legal_coloumns=LegalProps} <- ParentTables],
   sum_result(Results).
@@ -171,7 +171,7 @@ validate_coloumn_range(Range, ?ARITY_ONE, Value=#coloumn{}) ->
 validate_coloumn_range(Range, ?ARITY_ONE, Value=#row{tables=Tables}) ->
   case validate_row(Value) of
     {true, _} ->
-      Parents = Tables ++ lists:flatten([store:read_parents(Table) || Table <- Tables]),
+      Parents = Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables]),
       {lists:member(Range, Parents), []};
     {false, Errors} -> {false, Errors}
   end;
