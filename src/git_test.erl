@@ -5,7 +5,6 @@
 
 run() ->
   write_read_file(),
-  write_repo(),
   {ok, success}.
 
 write_read_file() ->
@@ -15,10 +14,3 @@ write_read_file() ->
     Jim == git:read_item(<<"jim">>)
   end,
   true = git:transaction(T).
-
-write_repo() ->
-  T = fun() ->
-    ItemURIs = store:read_items_of_type(?ITEM),
-    [git:write(store:read_item(URI)) || URI <- ItemURIs]
-  end,
-  git:transaction(T).

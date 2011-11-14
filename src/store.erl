@@ -61,16 +61,19 @@ stop() ->
   mnesia:stop().
 
 transaction(Fun) ->
-  mnesia:transaction(Fun).
+  git:transaction(fun() -> mnesia:transaction(Fun) end).
 
 write_all(Records) ->
   [write(Record) || Record <- Records],
   {ok, success}.
 
 write(Item=#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
-  ItemTableRecord = #item_table{uri=URI, label=Label, properties=resolve_properties(Properties)},
-  ItemTypeTableRecords = [#item_type_table{item=URI, type=resolve(Type)} || Type <- Types],
+  ResolvedItem = Item#item{types=resolve(utils:set(Types)), properties=resolve_properties(Properties)},
+  #item{types=ResolvedTypes, properties=ResolvedProperties} = ResolvedItem,
+  ItemTableRecord = #item_table{uri=URI, label=Label, properties=ResolvedProperties},
+  ItemTypeTableRecords = [#item_type_table{item=URI, type=Type} || Type <- ResolvedTypes],
   TypeParentTableRecords = type_parent_table_records(Item),
+  git:write(ResolvedItem),
   store_table_records([ItemTableRecord] ++ ItemTypeTableRecords ++ TypeParentTableRecords);
 
 write(Type=#type{}) ->
