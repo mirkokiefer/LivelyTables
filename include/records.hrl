@@ -33,11 +33,11 @@
 -define(INTERSECTION, <<"intersection">>).
 -define(UNION, <<"union">>).
 
--define(TRANSFORM_SET, <<"set_transform">>).
--define(TRANSFORM_CELLS_AS_TABLE, <<"transform_cells_as_table">>).
--define(TRANSFORM_COLOUMNS_AS_TABLE, <<"transform_coloumns_as_table">>).
--define(TRANSFORM_ROWS_WITH_COLOUMNS, <<"transform_rows_with_coloumns">>).
--define(TRANSFORM_ROWS_IN_TABLES, <<"transform_rows_in_tables">>).
+-define(TABLE_TRANSFORM, <<"table_transform">>).
+-define(TABLE2CELLS, <<"transform_table2cells">>).
+-define(TABLE2COLOUMNS, <<"transform_table2coloumns">>).
+-define(COLOUMNS2TABLES, <<"transform_coloumns2tables">>).
+-define(TABLES2TABLE, <<"transform_tables2table">>).
 
 -define(FILTER, <<"filter">>).
 

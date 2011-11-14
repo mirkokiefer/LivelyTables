@@ -65,19 +65,19 @@ set_operations() ->
   [SetOperation, Union, Intersection].
 
 set_transforms() ->
-  SetTransform = #table{uri= ?TRANSFORM_SET, label= <<"Set Transform">>, parents=[?SET], legal_coloumns=[
+  SetTransform = #table{uri= ?TABLE_TRANSFORM, label= <<"Set Transform">>, parents=[?SET], legal_coloumns=[
     ?COLOUMN_SET
   ]},
-  RowsToValues = #table{uri= ?TRANSFORM_CELLS_AS_TABLE, label= <<"Rows -> Values">>,
-    parents=[?TRANSFORM_SET], legal_coloumns=[?COLOUMN_COLOUMN_SET]},
-  RowsToColoumns = #table{uri= ?TRANSFORM_ROWS_WITH_COLOUMNS, label= <<"Rows -> Coloumns">>,
-    parents=[?TRANSFORM_SET], legal_coloumns=[]},
-  ColoumnsToRows = #table{uri= ?TRANSFORM_ROWS_WITH_COLOUMNS, label= <<"Coloumns -> Rows">>,
-    parents=[?TRANSFORM_SET], legal_coloumns=[]},
-  TablesToRows = #table{uri= ?TRANSFORM_ROWS_IN_TABLES, label= <<"Tables -> Rows">>,
-    parents=[?TRANSFORM_SET], legal_coloumns=[]},
+  Table2Cells = #table{uri= ?TABLE2CELLS, label= <<"Table -> Cells">>,
+    parents=[?TABLE_TRANSFORM], legal_coloumns=[?COLOUMN_COLOUMN_SET]},
+  Coloumns2Tables = #table{uri= ?COLOUMNS2TABLES, label= <<"Coloumns -> Tables">>,
+    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
+  Table2Coloumns = #table{uri= ?TABLE2COLOUMNS, label= <<"Table -> Coloumns">>,
+    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
+  Tables2Table = #table{uri= ?TABLES2TABLE, label= <<"Tables -> Table">>,
+    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
 
-  [SetTransform, RowsToValues, RowsToColoumns, ColoumnsToRows, TablesToRows].
+  [SetTransform, Table2Cells, Coloumns2Tables, Table2Coloumns, Tables2Table].
 
 set_filters() ->
   Filter = #table{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_coloumns=[
@@ -178,7 +178,7 @@ composite_rows2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #row{tables=[?TRANSFORM_ROWS_IN_TABLES], coloumns=[
+  Persons = #row{tables=[?TABLES2TABLE], coloumns=[
     {?COLOUMN_SET, row_list([<<"employee">>])}
   ]},
   ColoumnExists = #row{tables=[?COLOUMN_EXISTS_CONDITION], coloumns=[
