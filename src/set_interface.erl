@@ -1,59 +1,59 @@
 -module(set_interface).
--export([eval/1, eval_set_item/1]).
+-export([eval/1, eval_set_row/1]).
 
 -include("../include/records.hrl").
 
-eval_set_item(Set) ->
+eval_set_row(Set) ->
   eval(set_utils:set2records(Set)).
 
 eval(#union{sets=Sets}) ->
-  ItemSets = sets2erlang_sets(Sets),
-  sets:to_list(sets:union(ItemSets));
+  RowSets = sets2erlang_sets(Sets),
+  sets:to_list(sets:union(RowSets));
 
 eval(#intersection{sets=Sets}) ->
-  ItemSets = sets2erlang_sets(Sets),
-  sets:to_list(sets:intersection(ItemSets));
+  RowSets = sets2erlang_sets(Sets),
+  sets:to_list(sets:intersection(RowSets));
 
 eval(#filter{set=Set, conditions=Conditions}) ->
-  [ItemURI || ItemURI <- eval(Set), passes_conditions(read_item(ItemURI), Conditions)];
+  [RowURI || RowURI <- eval(Set), passes_conditions(read_row(RowURI), Conditions)];
 
-eval(#items2values{items=Set, properties=Properties}) ->
-  lists:flatten([item_values(ItemURI, Properties) || ItemURI <- eval(Set)]);
+eval(#rows2values{rows=Set, coloumns=Coloumns}) ->
+  lists:flatten([row_values(RowURI, Coloumns) || RowURI <- eval(Set)]);
 
-eval(#items2properties{items=Set}) ->
-  lists:flatten([item_properties(ItemURI) || ItemURI <- eval(Set)]);
+eval(#rows2coloumns{rows=Set}) ->
+  lists:flatten([row_coloumns(RowURI) || RowURI <- eval(Set)]);
 
-eval(#properties2items{properties=Set}) ->
-  ValidTypes = utils:types_with_legal_properties(eval(Set)),
-  utils:set(lists:flatten([store_interface:read_items_of_type(Each) || Each <- ValidTypes]));
+eval(#coloumns2rows{coloumns=Set}) ->
+  ValidTables = utils:tables_with_legal_coloumns(eval(Set)),
+  utils:set(lists:flatten([store_interface:read_rows_of_table(Each) || Each <- ValidTables]));
 
-eval(#types2items{types=Set}) ->
-  utils:set(lists:flatten([store_interface:read_items_of_type(Type) || Type <- eval(Set)]));
+eval(#tables2rows{tables=Set}) ->
+  utils:set(lists:flatten([store_interface:read_rows_of_table(Table) || Table <- eval(Set)]));
 
-eval(ItemList) -> ItemList.
+eval(RowList) -> RowList.
 
-passes_conditions(Item, Conditions) -> 
-  lists:all(fun(Condition) -> passes_condition(Condition, Item) end, Conditions).
+passes_conditions(Row, Conditions) -> 
+  lists:all(fun(Condition) -> passes_condition(Condition, Row) end, Conditions).
 
-passes_condition(#property_exists{properties=RequiredProperties}, #item{properties=Properties}) ->
-  PropertyList = [Property || {Property, _Value} <- Properties],
-  utils:is_joint(PropertyList, RequiredProperties);
+passes_condition(#coloumn_exists{coloumns=RequiredColoumns}, #row{coloumns=Coloumns}) ->
+  ColoumnList = [Coloumn || {Coloumn, _Value} <- Coloumns],
+  utils:is_joint(ColoumnList, RequiredColoumns);
 
-passes_condition(#value_equals{properties=CheckProperties, value=ValidValue}, #item{properties=Properties}) ->
-  PropertiesToCheck = [{Property, Value} || {Property, Value} <- Properties,
-    lists:member(Property, CheckProperties)],
-  lists:all(fun({_Property, Value}) -> Value == ValidValue end, PropertiesToCheck).
+passes_condition(#value_equals{coloumns=CheckColoumns, value=ValidValue}, #row{coloumns=Coloumns}) ->
+  ColoumnsToCheck = [{Coloumn, Value} || {Coloumn, Value} <- Coloumns,
+    lists:member(Coloumn, CheckColoumns)],
+  lists:all(fun({_Coloumn, Value}) -> Value == ValidValue end, ColoumnsToCheck).
 
 
 % utility functions
-item_values(ItemURI, UsedProperties) ->
-  Item = store_interface:read_item(ItemURI),
-  [Value || {Property, Value} <- Item#item.properties, lists:member(Property, UsedProperties)].
+row_values(RowURI, UsedColoumns) ->
+  Row = store_interface:read_row(RowURI),
+  [Value || {Coloumn, Value} <- Row#row.coloumns, lists:member(Coloumn, UsedColoumns)].
 
-item_properties(ItemURI) ->
-  #item{properties=Properties} = store_interface:read_item(ItemURI),
-  [Property || {Property, _} <- Properties].
+row_coloumns(RowURI) ->
+  #row{coloumns=Coloumns} = store_interface:read_row(RowURI),
+  [Coloumn || {Coloumn, _} <- Coloumns].
 
-read_item(URI) -> store_interface:read_item(URI).
+read_row(URI) -> store_interface:read_row(URI).
 
 sets2erlang_sets(Sets) -> [sets:from_list(eval(Each)) || Each <- Sets].

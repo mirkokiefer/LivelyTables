@@ -1,10 +1,10 @@
 
 -module(store).
 -export([init/0, reset/0, start/0, stop/0, clear/0]).
--export([transaction/1, write_all/1, read_item/1, read_type/1, read_property/1,
-  read_items_of_type/1, read_types_of_item/1, read_direct_types_of_item/1,
+-export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
+  read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
   read_parents/1, read_direct_parents/1,
-  read_subtypes/1, read_direct_subtypes/1]).
+  read_subtables/1, read_direct_subtables/1]).
 
 -include("../include/records.hrl").
 
@@ -12,10 +12,10 @@
 
 -define(DB_PATH, "../output/tuples.tab").
 
--define(TABLES, [item_table, item_type_table, type_parent_table]).
--record(item_table, {uri, label, properties=[]}).
--record(item_type_table, {item, type}).
--record(type_parent_table, {type, parent}).
+-define(TABLES, [rows, rows2table, table2parents]).
+-record(rows, {uri, label, coloumns=[]}).
+-record(rows2table, {row, table}).
+-record(table2parents, {table, parent}).
 
 init() ->
   mnesia:create_schema([node()]),
@@ -24,19 +24,19 @@ init() ->
   mnesia:stop().
 
 create_tables() ->
-  mnesia:create_table(item_table, [
-    {attributes, record_info(fields, item_table)},
+  utils:log(mnesia:create_table(rows, [
+    {attributes, record_info(fields, rows)},
     {type, set},
     {disc_copies,[node()]}
-  ]),
-  mnesia:create_table(item_type_table, [
-    {attributes, record_info(fields, item_type_table)},
+  ])),
+  mnesia:create_table(rows2table, [
+    {attributes, record_info(fields, rows2table)},
     {type, bag},
     {disc_copies,[node()]},
-    {index, [type]}
+    {index, [table]}
   ]),
-  mnesia:create_table(type_parent_table, [
-    {attributes, record_info(fields, type_parent_table)},
+  mnesia:create_table(table2parents, [
+    {attributes, record_info(fields, table2parents)},
     {type, bag},
     {disc_copies,[node()]},
     {index, [parent]}
@@ -67,122 +67,122 @@ write_all(Records) ->
   [write(Record) || Record <- Records],
   {ok, success}.
 
-write(Item=#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
-  ResolvedItem = Item#item{types=resolve(utils:set(Types)), properties=resolve_properties(Properties)},
-  #item{types=ResolvedTypes, properties=ResolvedProperties} = ResolvedItem,
-  ItemTableRecord = #item_table{uri=URI, label=Label, properties=ResolvedProperties},
-  ItemTypeTableRecords = [#item_type_table{item=URI, type=Type} || Type <- ResolvedTypes],
-  TypeParentTableRecords = type_parent_table_records(Item),
-  git:write(ResolvedItem),
-  store_table_records([ItemTableRecord] ++ ItemTypeTableRecords ++ TypeParentTableRecords);
+write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
+  ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(Coloumns)},
+  #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
+  RowTableRecord = #rows{uri=URI, label=Label, coloumns=ResolvedColoumns},
+  RowTableTableRecords = [#rows2table{row=URI, table=Table} || Table <- ResolvedTables],
+  TableParentTableRecords = table2parents_records(Row),
+  git:write(ResolvedRow),
+  store_table_records([RowTableRecord] ++ RowTableTableRecords ++ TableParentTableRecords);
 
-write(Type=#type{}) ->
-  write(utils:type2item(Type));
+write(Table=#table{}) ->
+  write(utils:table2row(Table));
 
-write(Property=#property{}) ->
-    write(utils:property2item(Property)).
+write(Coloumn=#coloumn{}) ->
+    write(utils:coloumn2row(Coloumn)).
 
-type_parent_table_records(Item=#item{uri=URI}) ->
-  case utils:item_property(?PROPERTY_PARENTS, Item) of
+table2parents_records(Row=#row{uri=URI}) ->
+  case utils:row_coloumn(?COLOUMN_PARENTS, Row) of
     undefined -> [];
-    Parents -> [#type_parent_table{type=URI, parent=resolve(Parent)} || Parent <- Parents]
+    Parents -> [#table2parents{table=URI, parent=resolve(Parent)} || Parent <- Parents]
   end.
 
-% resolve embedded items to their URIs if they exist and store them separately
+% resolve embedded rows to their URIs if they exist and store them separately
 resolve([]) -> [];
 
 resolve([First|Rest]) ->
   [resolve(First)|resolve(Rest)];
 
-resolve(Item=#item{uri=undefined, types=Types, properties=Properties}) ->
-  Item#item{types=resolve(Types), properties=resolve_properties(Properties)};
+resolve(Row=#row{uri=undefined, tables=Tables, coloumns=Coloumns}) ->
+  Row#row{tables=resolve(Tables), coloumns=resolve_coloumns(Coloumns)};
 
-resolve(Item=#item{uri=URI}) ->
-  write(Item),
+resolve(Row=#row{uri=URI}) ->
+  write(Row),
   URI;
 
-resolve(Property=#property{uri=URI}) ->
-  write(Property),
+resolve(Coloumn=#coloumn{uri=URI}) ->
+  write(Coloumn),
   URI;
 
-resolve(Type=#type{uri=URI}) ->
-  write(Type),
+resolve(Table=#table{uri=URI}) ->
+  write(Table),
   URI;
 
 resolve(URI) -> URI.
 
-resolve_properties([{Property, Value}|Rest]) ->
-  [{Property, resolve(Value)}|resolve_properties(Rest)];
-resolve_properties([]) -> [].
+resolve_coloumns([{Coloumn, Value}|Rest]) ->
+  [{Coloumn, resolve(Value)}|resolve_coloumns(Rest)];
+resolve_coloumns([]) -> [].
 
 store_table_records([First|Rest]) ->
   mnesia:write(First),
   store_table_records(Rest);
 store_table_records([]) -> {ok, success}.
 
-read_item(URI) ->
-  case read(item_table, URI) of
-    [#item_table{uri=URI, label=Label, properties=Props}] ->
-      Types = [Type || #item_type_table{type=Type} <- read(item_type_table, URI)],
-      #item{uri=URI, label=Label, types=Types, properties=Props};
+read_row(URI) ->
+  case read(rows, URI) of
+    [#rows{uri=URI, label=Label, coloumns=Props}] ->
+      Tables = [Table || #rows2table{table=Table} <- read(rows2table, URI)],
+      #row{uri=URI, label=Label, tables=Tables, coloumns=Props};
     [] -> undefined
   end.
 
-% Type "Item" doesn't have parents so we need to implement it explicitly
-read_type(?ITEM) -> utils:item2type(read_item(?ITEM));
-read_type(URI) ->
-  case {read_item(URI), read_direct_parents(URI)} of
+% Table "Row" doesn't have parents so we need to implement it explicitly
+read_table(?ROW) -> utils:row2table(read_row(?ROW));
+read_table(URI) ->
+  case {read_row(URI), read_direct_parents(URI)} of
     {undefined, _} -> undefined;
-    {_Item, []} -> undefined;
-    {Item, _Parents} -> utils:item2type(Item)
+    {_Row, []} -> undefined;
+    {Row, _Parents} -> utils:row2table(Row)
   end.
 
-read_property(URI) ->
-  case read_item(URI) of
+read_coloumn(URI) ->
+  case read_row(URI) of
     undefined -> undefined;
-    Item -> utils:item2property(Item)
+    Row -> utils:row2coloumn(Row)
   end.
 
-read_direct_types_of_item(ItemURI) ->
-  [Type || #item_type_table{type=Type} <- read(item_type_table, ItemURI)].
+read_direct_tables_of_row(RowURI) ->
+  [Table || #rows2table{table=Table} <- read(rows2table, RowURI)].
 
-read_types_of_item(ItemURI) -> utils:set(read_types_of_item_internal(ItemURI)).
+read_tables_of_row(RowURI) -> utils:set(read_tables_of_row_internal(RowURI)).
 
-read_types_of_item_internal(ItemURI) ->
-  Types = read_direct_types_of_item(ItemURI),
-  Types ++ lists:flatten([read_parents(Type) || Type <- Types]).
+read_tables_of_row_internal(RowURI) ->
+  Tables = read_direct_tables_of_row(RowURI),
+  Tables ++ lists:flatten([read_parents(Table) || Table <- Tables]).
 
-read_items_of_type(TypeURI) ->
-  lists:flatten([read_direct_items_of_type(Each) || Each <- [TypeURI|read_subtypes(TypeURI)]]).
+read_rows_of_table(TableURI) ->
+  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_subtables(TableURI)]]).
 
-read_direct_items_of_type(TypeURI) ->
-  F = fun() -> mnesia:index_read(item_type_table, TypeURI, #item_type_table.type) end,
+read_direct_rows_of_table(TableURI) ->
+  F = fun() -> mnesia:index_read(rows2table, TableURI, #rows2table.table) end,
   {atomic, Records} = mnesia:transaction(F),
-  [Item || #item_type_table{item=Item} <- Records].
+  [Row || #rows2table{row=Row} <- Records].
 
-read_parents(TypeURI) ->
-  DirectParents = read_direct_parents(TypeURI),
+read_parents(TableURI) ->
+  DirectParents = read_direct_parents(TableURI),
   DirectParents ++ lists:flatten([read_parents(Parent) || Parent <- DirectParents]).
 
-read_direct_parents(TypeURI) ->
-  [Parent || #type_parent_table{parent=Parent} <- read(type_parent_table, TypeURI)].
+read_direct_parents(TableURI) ->
+  [Parent || #table2parents{parent=Parent} <- read(table2parents, TableURI)].
 
-read_subtypes(TypeURI) ->
-  DirectSubtypes = read_direct_subtypes(TypeURI),
-  DirectSubtypes ++ lists:flatten([read_subtypes(Each) || Each <- DirectSubtypes]).
+read_subtables(TableURI) ->
+  DirectSubtables = read_direct_subtables(TableURI),
+  DirectSubtables ++ lists:flatten([read_subtables(Each) || Each <- DirectSubtables]).
 
-read_direct_subtypes(TypeURI) ->
-  F = fun() -> mnesia:index_read(type_parent_table, TypeURI, #type_parent_table.parent) end,
+read_direct_subtables(TableURI) ->
+  F = fun() -> mnesia:index_read(table2parents, TableURI, #table2parents.parent) end,
   {atomic, Records} = mnesia:transaction(F),
-  [Subtype || #type_parent_table{type=Subtype} <- Records].
+  [Subtable || #table2parents{table=Subtable} <- Records].
 
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,
   {atomic, Result} = mnesia:transaction(F),
   Result.
 
-query_item(URI) ->
-  do(qlc:q([Item || Item=#item{uri=U} <- mnesia:table(item), U==URI])).
+query_row(URI) ->
+  do(qlc:q([Row || Row=#row{uri=U} <- mnesia:table(row), U==URI])).
 
 % utility functions
 do(Q) ->

@@ -25,50 +25,50 @@ loop(Req) ->
     'PUT' -> put(Tokens, Parameters, mochijson2:decode(Req:recv_body()), Req)
   end.
 
-get([TypeID], _, Req) ->
-  ItemURIs = store_interface:read_items_of_type(TypeID),
-  send(Req, utils:json(ItemURIs));
+get([TableID], _, Req) ->
+  RowURIs = store_interface:read_rows_of_table(TableID),
+  send(Req, utils:json(RowURIs));
 
-get([<<"type">>, <<"_full">>], _, Req) ->
-  TypeURIs = store_interface:read_items_of_type(?TYPE),
-  Types = [store_interface:read_type(TypeURI) || TypeURI <- TypeURIs],
-  send(Req, utils:json(Types));
+get([<<"table">>, <<"_full">>], _, Req) ->
+  TableURIs = store_interface:read_rows_of_table(?TABLE),
+  Tables = [store_interface:read_table(TableURI) || TableURI <- TableURIs],
+  send(Req, utils:json(Tables));
 
-get([TypeID, <<"_full">>], _, Req) ->
-  ItemURIs = store_interface:read_items_of_type(TypeID),
-  Items = [store_interface:read_item(ItemURI, TypeID) || ItemURI <- ItemURIs],
-  send(Req, utils:json(Items));
+get([TableID, <<"_full">>], _, Req) ->
+  RowURIs = store_interface:read_rows_of_table(TableID),
+  Rows = [store_interface:read_row(RowURI, TableID) || RowURI <- RowURIs],
+  send(Req, utils:json(Rows));
 
-get([<<"type">>, TypeID], _, Req) ->
-  Type = store_interface:read_type(TypeID),
-  send(Req, utils:json(Type));
+get([<<"table">>, TableID], _, Req) ->
+  Table = store_interface:read_table(TableID),
+  send(Req, utils:json(Table));
 
 get([<<"_file">>|FileTokens], _, Req) ->
   Path = lists:flatten(["/" ++ binary_to_list(Directory) || Directory <- FileTokens]),
   Directory = filename:dirname(Path),
   Req:serve_file(filename:basename(Path), filename:absname("../www/" ++ Directory));
 
-get([TypeID, ItemID], _, Req) ->
-  Item = store_interface:read_item(ItemID, TypeID),
-  send(Req, utils:json(Item));
+get([TableID, RowID], _, Req) ->
+  Row = store_interface:read_row(RowID, TableID),
+  send(Req, utils:json(Row));
 
-get([_TypeID, _ItemID, <<"html">>], _, Req) ->
+get([_TableID, _RowID, <<"html">>], _, Req) ->
   Path = "../www/",
   Req:serve_file("ui.html", filename:absname(Path));
 
-get([_TypeID, _ItemID, Attachment], _, Req) ->
+get([_TableID, _RowID, Attachment], _, Req) ->
   Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
 
-put([<<"type">>, TypeID], _, Body, Req) ->
-  Type = utils:json2type(Body),
-  NewType = Type#type{uri=TypeID},
-  {atomic, Response} = t(fun() -> store_interface:write_type(NewType) end),
+put([<<"table">>, TableID], _, Body, Req) ->
+  Table = utils:json2table(Body),
+  NewTable = Table#table{uri=TableID},
+  {atomic, Response} = t(fun() -> store_interface:write_table(NewTable) end),
   send(Req, valid2json(Response));
 
-put([TypeID, ItemID], _, Body, Req) ->
-  Item = utils:json2item(Body),
-  NewItem = Item#item{uri=ItemID},
-  {atomic, Response} = t(fun() -> store_interface:write_item(NewItem, TypeID) end),
+put([TableID, RowID], _, Body, Req) ->
+  Row = utils:json2row(Body),
+  NewRow = Row#row{uri=RowID},
+  {atomic, Response} = t(fun() -> store_interface:write_row(NewRow, TableID) end),
   send(Req, valid2json(Response)).
 
 valid2json({ok, success}) -> json({struct, [{success, true}]});

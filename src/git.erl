@@ -1,28 +1,28 @@
 -module(git).
--export([reset/0, git/1, transaction/1, write/1, read_item/1, read_type/1, read_property/1]).
+-export([reset/0, git/1, transaction/1, write/1, read_row/1, read_table/1, read_coloumn/1]).
 -include("../include/records.hrl").
 -include("../include/config.hrl").
 
 
-write(Item=#item{}) -> write_item(Item);
-write(Type=#type{}) -> write_item(utils:type2item(Type));
-write(Property=#property{}) -> write_item(utils:property2item(Property)).
+write(Row=#row{}) -> write_row(Row);
+write(Table=#table{}) -> write_row(utils:table2row(Table));
+write(Coloumn=#coloumn{}) -> write_row(utils:coloumn2row(Coloumn)).
 
-write_item(Item = #item{uri=URI}) ->
-  utils:write_file(item_path(URI), utils:item2propertylist(Item)).  
+write_row(Row = #row{uri=URI}) ->
+  utils:write_file(row_path(URI), utils:row2coloumnlist(Row)).  
 
-read_item(URI) ->
-  read(item_path(URI)).
+read_row(URI) ->
+  read(row_path(URI)).
 
-read_type(URI) ->
-  utils:item2type(read_item(URI)).
+read_table(URI) ->
+  utils:row2table(read_row(URI)).
 
-read_property(URI) ->
-  utils:item2property(read_item(URI)).
+read_coloumn(URI) ->
+  utils:row2coloumn(read_row(URI)).
 
 read(Path) ->
-  {ok, PropertyList} = utils:read_file(Path),
-  utils:propertylist2item(PropertyList).
+  {ok, ColoumnList} = utils:read_file(Path),
+  utils:coloumnlist2row(ColoumnList).
 
 transaction(Fun) ->
   Value = Fun(),
@@ -32,7 +32,7 @@ transaction(Fun) ->
 commit() ->
   cmds([
     git("add -A"),
-    git("commit -m \"write items\"")
+    git("commit -m \"write rows\"")
   ]).
 
 reset() ->
@@ -57,4 +57,4 @@ git(Command) ->
   "git --git-dir=" ++ ?GIT_STORE_PATH ++ ".git --work-tree=" ++ ?GIT_STORE_PATH ++ " " ++ Command.
 
 
-item_path(URI) -> ?GIT_STORE_PATH ++ bitstring_to_list(URI) ++ ".txt".
+row_path(URI) -> ?GIT_STORE_PATH ++ bitstring_to_list(URI) ++ ".txt".

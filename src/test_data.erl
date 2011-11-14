@@ -1,176 +1,176 @@
 -module(test_data).
--export([core_types/0, core_properties/0, set_properties/0, set_types/0, types/0, composite_items/0]).
--export([items/0, properties/0, items_updated/0, invalid_items/0, invalid_items_updated/0, composite_items2/0]).
+-export([core_tables/0, core_coloumns/0, set_coloumns/0, set_tables/0, tables/0, composite_rows/0]).
+-export([rows/0, coloumns/0, rows_updated/0, invalid_rows/0, invalid_rows_updated/0, composite_rows2/0]).
 -export([sample_set/0, record_set/0]).
 
 -include("../include/records.hrl").
 
 
-core_types() ->
-  Item = #type{uri= ?ITEM, label= <<"Item">>, parents=[], legal_properties=[
-    ?PROPERTY_LABEL,
-    ?PROPERTY_TYPES
+core_tables() ->
+  Row = #table{uri= ?ROW, label= <<"Row">>, parents=[], legal_coloumns=[
+    ?COLOUMN_LABEL,
+    ?COLOUMN_TABLES
   ]},
-  Type = #type{uri= ?TYPE, label= <<"Type">>, legal_properties=[
-    ?PROPERTY_LEGALPROPERTIES,
-    ?PROPERTY_PARENTS
+  Table = #table{uri= ?TABLE, label= <<"Table">>, legal_coloumns=[
+    ?COLOUMN_LEGALCOLOUMNS,
+    ?COLOUMN_PARENTS
   ]},
-  Property = #type{uri= ?PROPERTY, label= <<"Property">>,
-    legal_properties=[
-      ?PROPERTY_RANGE,
-      ?PROPERTY_ARITY
+  Coloumn = #table{uri= ?COLOUMN, label= <<"Coloumn">>,
+    legal_coloumns=[
+      ?COLOUMN_RANGE,
+      ?COLOUMN_ARITY
     ]
   },
-  [Item, Type, Property].
+  [Row, Table, Coloumn].
 
-core_properties() ->
-  Label = #property{uri= ?PROPERTY_LABEL, label= <<"Label">>, range=?PROPERTY_TYPE_STRING},
-  Types = #property{uri= ?PROPERTY_TYPES, label= <<"Types">>, range=?TYPE, arity=?ARITY_MANY},
-  Parents = #property{uri= ?PROPERTY_PARENTS, label= <<"Parents">>, range=?TYPE, arity=?ARITY_MANY},
-  LegalProps = #property{uri= ?PROPERTY_LEGALPROPERTIES, label= <<"Legal Properties">>,
-    range=?PROPERTY, arity=?ARITY_MANY},
-  Range = #property{uri=?PROPERTY_RANGE, label= <<"Range">>, range=?TYPE, arity=?ARITY_ONE},
-  Arity = #property{uri=?PROPERTY_ARITY, label= <<"Arity">>, range=?PROPERTY_TYPE_STRING},
-  Inverse = #property{uri=?PROPERTY_INVERSE, label= <<"Inverse">>, range=?PROPERTY, optional=true},
-  Optional = #property{uri=?PROPERTY_OPTIONAL, label= <<"Optional">>, range=?PROPERTY_TYPE_BOOLEAN},
-  [Label, Types, Parents, LegalProps, Range, Arity, Inverse, Optional].
+core_coloumns() ->
+  Label = #coloumn{uri= ?COLOUMN_LABEL, label= <<"Label">>, range=?COLOUMN_TYPE_STRING},
+  Tables = #coloumn{uri= ?COLOUMN_TABLES, label= <<"Tables">>, range=?TABLE, arity=?ARITY_MANY},
+  Parents = #coloumn{uri= ?COLOUMN_PARENTS, label= <<"Parents">>, range=?TABLE, arity=?ARITY_MANY},
+  LegalProps = #coloumn{uri= ?COLOUMN_LEGALCOLOUMNS, label= <<"Legal Coloumns">>,
+    range=?COLOUMN, arity=?ARITY_MANY},
+  Range = #coloumn{uri=?COLOUMN_RANGE, label= <<"Range">>, range=?TABLE, arity=?ARITY_ONE},
+  Arity = #coloumn{uri=?COLOUMN_ARITY, label= <<"Arity">>, range=?COLOUMN_TYPE_STRING},
+  Inverse = #coloumn{uri=?COLOUMN_INVERSE, label= <<"Inverse">>, range=?COLOUMN, optional=true},
+  Optional = #coloumn{uri=?COLOUMN_OPTIONAL, label= <<"Optional">>, range=?COLOUMN_TYPE_BOOLEAN},
+  [Label, Tables, Parents, LegalProps, Range, Arity, Inverse, Optional].
 
-set_properties() ->
-  Sets = #property{uri= ?PROPERTY_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-  Set = #property{uri= ?PROPERTY_SET, label= <<"Set">>, range=?SET},
-  Items = #property{uri= ?PROPERTY_ITEMS, label= <<"Items">>, range=?ITEM, arity=?ARITY_MANY},
+set_coloumns() ->
+  Sets = #coloumn{uri= ?COLOUMN_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
+  Set = #coloumn{uri= ?COLOUMN_SET, label= <<"Set">>, range=?SET},
+  Rows = #coloumn{uri= ?COLOUMN_ROWS, label= <<"Rows">>, range=?ROW, arity=?ARITY_MANY},
 
-  PropertySet = #property{uri= ?PROPERTY_PROPERTY_SET, label= <<"Property set">>, range=?SET},
+  ColoumnSet = #coloumn{uri= ?COLOUMN_COLOUMN_SET, label= <<"Coloumn set">>, range=?SET},
 
-  Conditions = #property{uri= ?PROPERTY_CONDITIONS, label= <<"Property Conditions">>,
+  Conditions = #coloumn{uri= ?COLOUMN_CONDITIONS, label= <<"Coloumn Conditions">>,
     range=?CONDITION, arity=?ARITY_MANY},
-  Value = #property{uri= ?PROPERTY_VALUE, label= <<"Value">>, range=?ITEM},
+  Value = #coloumn{uri= ?COLOUMN_VALUE, label= <<"Value">>, range=?ROW},
 
-  [Sets, Set, Items, PropertySet, Conditions, Value].
+  [Sets, Set, Rows, ColoumnSet, Conditions, Value].
 
 
-set_types() ->
-  Set = #type{uri= ?SET, label= <<"Set">>, legal_properties=[]},
-  ItemList = #type{uri= ?ITEM_LIST, label= <<"Item list">>,
-    parents=[?SET], legal_properties=[?PROPERTY_ITEMS]},
-  % a dummy item representing the project set:
-  Project = #item{uri= ?PROJECT_SET, types=[?SET], label= <<"Project set">>},
-  [Set, ItemList, Project | set_operations() ++ set_transforms() ++ set_filters()].
+set_tables() ->
+  Set = #table{uri= ?SET, label= <<"Set">>, legal_coloumns=[]},
+  RowList = #table{uri= ?ROW_LIST, label= <<"Row list">>,
+    parents=[?SET], legal_coloumns=[?COLOUMN_ROWS]},
+  % a dummy row representing the project set:
+  Project = #row{uri= ?PROJECT_SET, tables=[?SET], label= <<"Project set">>},
+  [Set, RowList, Project | set_operations() ++ set_transforms() ++ set_filters()].
 
 set_operations() ->
-  SetOperation = #type{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
-    legal_properties=[?PROPERTY_SETS]},
-  Union = #type{uri= ?UNION, label= <<"Union">>, parents=[?SET_OPERATION], legal_properties=[]},
-  Intersection = #type{uri= ?INTERSECTION, label= <<"Intersection">>, parents=[?SET_OPERATION], legal_properties=[]},
+  SetOperation = #table{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
+    legal_coloumns=[?COLOUMN_SETS]},
+  Union = #table{uri= ?UNION, label= <<"Union">>, parents=[?SET_OPERATION], legal_coloumns=[]},
+  Intersection = #table{uri= ?INTERSECTION, label= <<"Intersection">>, parents=[?SET_OPERATION], legal_coloumns=[]},
   [SetOperation, Union, Intersection].
 
 set_transforms() ->
-  SetTransform = #type{uri= ?TRANSFORM_SET, label= <<"Set Transform">>, parents=[?SET], legal_properties=[
-    ?PROPERTY_SET
+  SetTransform = #table{uri= ?TRANSFORM_SET, label= <<"Set Transform">>, parents=[?SET], legal_coloumns=[
+    ?COLOUMN_SET
   ]},
-  ItemsToValues = #type{uri= ?TRANSFORM_ITEMS_TO_VALUES, label= <<"Items -> Values">>,
-    parents=[?TRANSFORM_SET], legal_properties=[?PROPERTY_PROPERTY_SET]},
-  ItemsToProperties = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Items -> Properties">>,
-    parents=[?TRANSFORM_SET], legal_properties=[]},
-  PropertiesToItems = #type{uri= ?TRANSFORM_PROPERTIES_TO_ITEMS, label= <<"Properties -> Items">>,
-    parents=[?TRANSFORM_SET], legal_properties=[]},
-  TypesToItems = #type{uri= ?TRANSFORM_TYPES_TO_ITEMS, label= <<"Types -> Items">>,
-    parents=[?TRANSFORM_SET], legal_properties=[]},
+  RowsToValues = #table{uri= ?TRANSFORM_ROWS_TO_VALUES, label= <<"Rows -> Values">>,
+    parents=[?TRANSFORM_SET], legal_coloumns=[?COLOUMN_COLOUMN_SET]},
+  RowsToColoumns = #table{uri= ?TRANSFORM_COLOUMNS_TO_ROWS, label= <<"Rows -> Coloumns">>,
+    parents=[?TRANSFORM_SET], legal_coloumns=[]},
+  ColoumnsToRows = #table{uri= ?TRANSFORM_COLOUMNS_TO_ROWS, label= <<"Coloumns -> Rows">>,
+    parents=[?TRANSFORM_SET], legal_coloumns=[]},
+  TablesToRows = #table{uri= ?TRANSFORM_TABLES_TO_ROWS, label= <<"Tables -> Rows">>,
+    parents=[?TRANSFORM_SET], legal_coloumns=[]},
 
-  [SetTransform, ItemsToValues, ItemsToProperties, PropertiesToItems, TypesToItems].
+  [SetTransform, RowsToValues, RowsToColoumns, ColoumnsToRows, TablesToRows].
 
 set_filters() ->
-  Filter = #type{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_properties=[
-    ?PROPERTY_SET,
-    ?PROPERTY_CONDITIONS
+  Filter = #table{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_coloumns=[
+    ?COLOUMN_SET,
+    ?COLOUMN_CONDITIONS
   ]},
 
-  Condition = #type{uri= ?CONDITION, label= <<"Property Condition">>, parents=[?SET], legal_properties=[
-    ?PROPERTY_PROPERTY_SET
+  Condition = #table{uri= ?CONDITION, label= <<"Coloumn Condition">>, parents=[?SET], legal_coloumns=[
+    ?COLOUMN_COLOUMN_SET
   ]},
 
-  PropertyExists = #type{uri= ?PROPERTY_EXISTS_CONDITION, label= <<"Property exists">>, parents=[?CONDITION]},
-  ValueCondition = #type{uri= ?VALUE_CONDITION, label= <<"Value condition">>, parents=[?CONDITION]},
-  Equals = #type{uri= ?VALUE_CONDITION_EQUALS, label= <<"Value equals">>, parents=[?VALUE_CONDITION],
-    legal_properties=[?PROPERTY_VALUE]},
+  ColoumnExists = #table{uri= ?COLOUMN_EXISTS_CONDITION, label= <<"Coloumn exists">>, parents=[?CONDITION]},
+  ValueCondition = #table{uri= ?VALUE_CONDITION, label= <<"Value condition">>, parents=[?CONDITION]},
+  Equals = #table{uri= ?VALUE_CONDITION_EQUALS, label= <<"Value equals">>, parents=[?VALUE_CONDITION],
+    legal_coloumns=[?COLOUMN_VALUE]},
 
-  [Filter, Condition, PropertyExists, ValueCondition, Equals].
+  [Filter, Condition, ColoumnExists, ValueCondition, Equals].
 
-types() ->
-  Person = #type{uri= <<"person">>, label= <<"Person">>, legal_properties=[<<"age">>]},
-  Employee = #type{uri= <<"employee">>, label= <<"Employee">>, parents=[<<"person">>],
-    legal_properties=[<<"salary">>, <<"boss">>]},
-  Manager = #type{uri= <<"manager">>, label= <<"Manager">>, parents=[<<"employee">>],
-    legal_properties=[<<"manages">>]},
+tables() ->
+  Person = #table{uri= <<"person">>, label= <<"Person">>, legal_coloumns=[<<"age">>]},
+  Employee = #table{uri= <<"employee">>, label= <<"Employee">>, parents=[<<"person">>],
+    legal_coloumns=[<<"salary">>, <<"boss">>]},
+  Manager = #table{uri= <<"manager">>, label= <<"Manager">>, parents=[<<"employee">>],
+    legal_coloumns=[<<"manages">>]},
   [Person, Employee, Manager].
 
-composite_items() ->
-  RealEstate = #type{uri= <<"real_estate">>, label= <<"Real Estate">>, legal_properties=[
-    #property{uri= <<"accomodates">>, label= <<"accomodates">>, range= <<"person">>, arity= <<"many">>}
+composite_rows() ->
+  RealEstate = #table{uri= <<"real_estate">>, label= <<"Real Estate">>, legal_coloumns=[
+    #coloumn{uri= <<"accomodates">>, label= <<"accomodates">>, range= <<"person">>, arity= <<"many">>}
   ]},
-  Company = #type{uri= <<"company">>, label= <<"Company">>, legal_properties=[
-    #property{uri= <<"company_owns">>, label= <<"owns">>, range= RealEstate, optional=true}
+  Company = #table{uri= <<"company">>, label= <<"Company">>, legal_coloumns=[
+    #coloumn{uri= <<"company_owns">>, label= <<"owns">>, range= RealEstate, optional=true}
   ]},
-  SomeCompany = #item{uri= <<"some_company">>, label= <<"Some Company">>, types=[Company], properties=[
-    {<<"company_owns">>, #item{label= <<"A House">>, types=[<<"real_estate">>], properties=[
-      {<<"accomodates">>, #item{uri= <<"bob">>, label= <<"Bob">>, types=[<<"person">>], properties=[{<<"age">>, 20}]}}
+  SomeCompany = #row{uri= <<"some_company">>, label= <<"Some Company">>, tables=[Company], coloumns=[
+    {<<"company_owns">>, #row{label= <<"A House">>, tables=[<<"real_estate">>], coloumns=[
+      {<<"accomodates">>, #row{uri= <<"bob">>, label= <<"Bob">>, tables=[<<"person">>], coloumns=[{<<"age">>, 20}]}}
     ]}}
   ]},
   [SomeCompany].
 
-items() ->
-  Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
+rows() ->
+  Paul = #row{uri= <<"paul">>, label= <<"Paul">>, tables=[<<"employee">>], coloumns=[
     {<<"age">>, 30},
     {<<"salary">>, 5000}
   ]},
-  Jim = #item{uri= <<"jim">>, label= <<"Jim">>, types=[<<"manager">>], properties=[
+  Jim = #row{uri= <<"jim">>, label= <<"Jim">>, tables=[<<"manager">>], coloumns=[
     {<<"age">>, 40},
     {<<"salary">>, 10000},
     {<<"manages">>, [<<"paul">>]}
   ]},
   [Paul, Jim].
 
-items_updated() ->
-  UpdatedPaul = #item{uri= <<"paul">>, properties=[
+rows_updated() ->
+  UpdatedPaul = #row{uri= <<"paul">>, coloumns=[
     {<<"boss">>, <<"jim">>}
   ]},
   [UpdatedPaul].
 
-properties() ->
-  Manages = #property{uri= <<"manages">>, label= <<"Manages">>, range= <<"employee">>,
+coloumns() ->
+  Manages = #coloumn{uri= <<"manages">>, label= <<"Manages">>, range= <<"employee">>,
     arity=?ARITY_MANY, optional=true},
-  Boss = #property{uri= <<"boss">>, label= <<"Boss">>, range= <<"manager">>, inverse= <<"manages">>, optional=true},
-  Salary = #property{uri= <<"salary">>, label= <<"Salary">>, range=?PROPERTY_TYPE_NUMBER},
-  Age = #property{uri= <<"age">>, label= <<"Age">>, range=?PROPERTY_TYPE_NUMBER},
+  Boss = #coloumn{uri= <<"boss">>, label= <<"Boss">>, range= <<"manager">>, inverse= <<"manages">>, optional=true},
+  Salary = #coloumn{uri= <<"salary">>, label= <<"Salary">>, range=?COLOUMN_TYPE_NUMBER},
+  Age = #coloumn{uri= <<"age">>, label= <<"Age">>, range=?COLOUMN_TYPE_NUMBER},
   [Manages, Boss, Salary, Age].
 
-invalid_items() ->
-  Paul = #item{uri= <<"paul">>, label= <<"Paul">>, types=[<<"employee">>], properties=[
+invalid_rows() ->
+  Paul = #row{uri= <<"paul">>, label= <<"Paul">>, tables=[<<"employee">>], coloumns=[
     {<<"age">>, <<"40">>},
     {<<"salary">>, 5000},
     {<<"bosss">>, <<"jim">>}
   ]},
   [Paul].
 
-invalid_items_updated() ->
-  Paul = #item{uri= <<"paul">>, properties=[
+invalid_rows_updated() ->
+  Paul = #row{uri= <<"paul">>, coloumns=[
     {<<"bosss">>, <<"jim">>}
   ]},
   [Paul].
 
-composite_items2() ->
-  Alex = #item{uri= <<"alex">>, label= <<"Alex">>, types=[<<"employee">>], properties=[
+composite_rows2() ->
+  Alex = #row{uri= <<"alex">>, label= <<"Alex">>, tables=[<<"employee">>], coloumns=[
     {<<"age">>, 50},
     {<<"salary">>, 2000},
-    {<<"boss">>, #item{uri= <<"jack">>, label= <<"Jack">>, types=[<<"manager">>], properties=[
+    {<<"boss">>, #row{uri= <<"jack">>, label= <<"Jack">>, tables=[<<"manager">>], coloumns=[
       {<<"age">>, 40},
       {<<"salary">>, 10000}
     ]}}
   ]},
-  Fred = #item{uri= <<"fred">>, label= <<"Fred">>, types=[<<"employee">>], properties=[
+  Fred = #row{uri= <<"fred">>, label= <<"Fred">>, tables=[<<"employee">>], coloumns=[
     {<<"age">>, 20},
     {<<"salary">>, 2500},
-    {<<"boss">>, #item{label= <<"George">>, types=[<<"manager">>], properties=[
+    {<<"boss">>, #row{label= <<"George">>, tables=[<<"manager">>], coloumns=[
       {<<"age">>, 60},
       {<<"salary">>, 12000}
     ]}}
@@ -178,33 +178,33 @@ composite_items2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #item{types=[?TRANSFORM_TYPES_TO_ITEMS], properties=[
-    {?PROPERTY_SET, item_list([<<"employee">>])}
+  Persons = #row{tables=[?TRANSFORM_TABLES_TO_ROWS], coloumns=[
+    {?COLOUMN_SET, row_list([<<"employee">>])}
   ]},
-  PropertyExists = #item{types=[?PROPERTY_EXISTS_CONDITION], properties=[
-    {?PROPERTY_PROPERTY_SET, item_list([<<"boss">>])}
+  ColoumnExists = #row{tables=[?COLOUMN_EXISTS_CONDITION], coloumns=[
+    {?COLOUMN_COLOUMN_SET, row_list([<<"boss">>])}
   ]},
-  PropertyCondition = #item{types=[?VALUE_CONDITION_EQUALS], properties=[
-    {?PROPERTY_PROPERTY_SET, item_list([<<"boss">>])},
-    {?PROPERTY_VALUE, <<"jim">>}
+  ColoumnCondition = #row{tables=[?VALUE_CONDITION_EQUALS], coloumns=[
+    {?COLOUMN_COLOUMN_SET, row_list([<<"boss">>])},
+    {?COLOUMN_VALUE, <<"jim">>}
   ]},
-  BossJim = #item{label= <<"Persons with boss Jim">>, types=[?FILTER], properties=[
-    {?PROPERTY_SET, Persons},
-    {?PROPERTY_CONDITIONS, [PropertyExists, PropertyCondition]}
+  BossJim = #row{label= <<"Persons with boss Jim">>, tables=[?FILTER], coloumns=[
+    {?COLOUMN_SET, Persons},
+    {?COLOUMN_CONDITIONS, [ColoumnExists, ColoumnCondition]}
   ]},
-  #item{uri= <<"sample_set">>, label= <<"Sample set">>, types=[?UNION], properties=[
-    {?PROPERTY_SETS, [
+  #row{uri= <<"sample_set">>, label= <<"Sample set">>, tables=[?UNION], coloumns=[
+    {?COLOUMN_SETS, [
       BossJim,
-      #item{types=[?ITEM_LIST], properties=[{?PROPERTY_ITEMS, [<<"jim">>]}]}
+      #row{tables=[?ROW_LIST], coloumns=[{?COLOUMN_ROWS, [<<"jim">>]}]}
     ]}
   ]}.
 
 record_set() ->
-  Persons = #types2items{types=[<<"employee">>]},
-  PropertyExists = #property_exists{properties=[<<"boss">>]},
-  PropertyConditions = #value_equals{properties= [<<"boss">>], value= <<"jim">>},
-  BossJim = #filter{set=Persons, conditions=[PropertyExists, PropertyConditions]},
+  Persons = #tables2rows{tables=[<<"employee">>]},
+  ColoumnExists = #coloumn_exists{coloumns=[<<"boss">>]},
+  ColoumnConditions = #value_equals{coloumns= [<<"boss">>], value= <<"jim">>},
+  BossJim = #filter{set=Persons, conditions=[ColoumnExists, ColoumnConditions]},
   #union{sets=[BossJim, [<<"jim">>]]}.
 
-item_list(Items) ->
-  #item{types=[?ITEM_LIST], properties=[{?PROPERTY_ITEMS, Items}]}.
+row_list(Rows) ->
+  #row{tables=[?ROW_LIST], coloumns=[{?COLOUMN_ROWS, Rows}]}.

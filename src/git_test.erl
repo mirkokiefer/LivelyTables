@@ -9,8 +9,8 @@ run() ->
 
 write_read_file() ->
   T = fun() ->
-    Jim = store_interface:read_item(<<"jim">>),
+    Jim = store_interface:read_row(<<"jim">>),
     git:write(Jim),
-    Jim == git:read_item(<<"jim">>)
+    Jim == git:read_row(<<"jim">>)
   end,
   true = git:transaction(T).

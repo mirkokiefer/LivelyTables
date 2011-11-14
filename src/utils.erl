@@ -1,10 +1,10 @@
 -module(utils).
 -export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
-  item_property/2, types_with_legal_properties/1,
-  item2propertylist/1, propertylist2item/1,
-  item2type/1, type2item/1, item2property/1, property2item/1,
-  json/1, json2item/1, json2type/1, json2property/1]).
+  row_coloumn/2, tables_with_legal_coloumns/1,
+  row2coloumnlist/1, coloumnlist2row/1,
+  row2table/1, table2row/1, row2coloumn/1, coloumn2row/1,
+  json/1, json2row/1, json2table/1, json2coloumn/1]).
 
 -include("../include/records.hrl").
 
@@ -43,77 +43,77 @@ is_disjoint(List1, List2) ->
 is_subset(Subset, List) ->
   sets:is_subset(sets:from_list(Subset), sets:from_list(List)).
 
-item_property(PropURI, #item{properties=Properties}) ->
-  case lists:keyfind(PropURI, 1, Properties) of
+row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
+  case lists:keyfind(PropURI, 1, Coloumns) of
     false -> undefined;
     {_, Value} -> Value
   end.
 
-types_with_legal_properties(ValidLegalProps) -> types_with_legal_props(?ITEM, ValidLegalProps).
+tables_with_legal_coloumns(ValidLegalProps) -> tables_with_legal_props(?ROW, ValidLegalProps).
 
-types_with_legal_props(CurrentTypeURI, ValidLegalProps) ->
-  #type{legal_properties=LegalProps} = store_interface:read_type(CurrentTypeURI),
+tables_with_legal_props(CurrentTableURI, ValidLegalProps) ->
+  #table{legal_coloumns=LegalProps} = store_interface:read_table(CurrentTableURI),
   case utils:is_subset(ValidLegalProps, LegalProps) of
-    true -> [CurrentTypeURI];
-    false -> Subtypes = store_interface:read_direct_subtypes(CurrentTypeURI),
-      lists:flatten([types_with_legal_props(Subtype, ValidLegalProps) || Subtype <- Subtypes])
+    true -> [CurrentTableURI];
+    false -> Subtables = store_interface:read_direct_subtables(CurrentTableURI),
+      lists:flatten([tables_with_legal_props(Subtable, ValidLegalProps) || Subtable <- Subtables])
   end.
 
-item2propertylist(#item{uri=URI, label=Label, types=Types, properties=Properties}) ->
+row2coloumnlist(#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
   [
     {?URI, URI},
-    {?PROPERTY_LABEL, Label},
-    {?PROPERTY_TYPES, Types}
-  ] ++ Properties.
+    {?COLOUMN_LABEL, Label},
+    {?COLOUMN_TABLES, Tables}
+  ] ++ Coloumns.
 
-propertylist2item([{_, URI}, {_, Label}, {_, Types}|Rest]) ->
-  #item{uri=URI, label=Label, types=Types, properties=Rest}.
+coloumnlist2row([{_, URI}, {_, Label}, {_, Tables}|Rest]) ->
+  #row{uri=URI, label=Label, tables=Tables, coloumns=Rest}.
 
 
-item2type(#item{uri=URI, label=Label, properties=Properties}) ->
-  item2type(Properties, #type{uri=URI, label=Label}).
+row2table(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
+  row2table(Coloumns, #table{uri=URI, label=Label}).
 
-item2type([{PropertyURI, Value}|Rest], Type=#type{properties=Properties}) ->
-  NewType = case PropertyURI of
-    ?PROPERTY_PARENTS -> Type#type{parents=Value};
-    ?PROPERTY_LEGALPROPERTIES -> Type#type{legal_properties=Value};
-    _ -> Type#type{properties=[{PropertyURI, Value}|Properties]}
+row2table([{ColoumnURI, Value}|Rest], Table=#table{coloumns=Coloumns}) ->
+  NewTable = case ColoumnURI of
+    ?COLOUMN_PARENTS -> Table#table{parents=Value};
+    ?COLOUMN_LEGALCOLOUMNS -> Table#table{legal_coloumns=Value};
+    _ -> Table#table{coloumns=[{ColoumnURI, Value}|Coloumns]}
   end,
-  item2type(Rest, NewType);
-item2type([], Type) -> Type.
+  row2table(Rest, NewTable);
+row2table([], Table) -> Table.
 
-type2item(Type) ->
-  #item{uri=Type#type.uri, label=Type#type.label, types=Type#type.types, properties=[
-    {?PROPERTY_PARENTS, Type#type.parents},
-    {?PROPERTY_LEGALPROPERTIES, Type#type.legal_properties}
-  ] ++ Type#type.properties}.
+table2row(Table) ->
+  #row{uri=Table#table.uri, label=Table#table.label, tables=Table#table.tables, coloumns=[
+    {?COLOUMN_PARENTS, Table#table.parents},
+    {?COLOUMN_LEGALCOLOUMNS, Table#table.legal_coloumns}
+  ] ++ Table#table.coloumns}.
 
-item2property(#item{uri=URI, label=Label, properties=Properties}) ->
-  item2property(Properties, #property{uri=URI, label=Label}).
+row2coloumn(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
+  row2coloumn(Coloumns, #coloumn{uri=URI, label=Label}).
 
-item2property([{PropertyURI, Value}|Rest], Property=#property{properties=Properties}) ->
-  NewProperty = case PropertyURI of
-    ?PROPERTY_RANGE -> Property#property{range=Value};
-    ?PROPERTY_ARITY -> Property#property{arity=Value};
-    ?PROPERTY_INVERSE -> Property#property{inverse=Value};
-    ?PROPERTY_OPTIONAL -> Property#property{optional=Value};
-    _ -> Property#property{properties=[{PropertyURI, Value}|Properties]}
+row2coloumn([{ColoumnURI, Value}|Rest], Coloumn=#coloumn{coloumns=Coloumns}) ->
+  NewColoumn = case ColoumnURI of
+    ?COLOUMN_RANGE -> Coloumn#coloumn{range=Value};
+    ?COLOUMN_ARITY -> Coloumn#coloumn{arity=Value};
+    ?COLOUMN_INVERSE -> Coloumn#coloumn{inverse=Value};
+    ?COLOUMN_OPTIONAL -> Coloumn#coloumn{optional=Value};
+    _ -> Coloumn#coloumn{coloumns=[{ColoumnURI, Value}|Coloumns]}
   end,
-  item2property(Rest, NewProperty);
-item2property([], Property) -> Property.
+  row2coloumn(Rest, NewColoumn);
+row2coloumn([], Coloumn) -> Coloumn.
 
-property2item(Property) ->
-  Item=#item{uri=Property#property.uri, label=Property#property.label, types=Property#property.types,
-    properties=[
-      {?PROPERTY_RANGE, Property#property.range},
-      {?PROPERTY_ARITY, Property#property.arity},
-      {?PROPERTY_OPTIONAL, Property#property.optional}
-    ] ++ Property#property.properties
+coloumn2row(Coloumn) ->
+  Row=#row{uri=Coloumn#coloumn.uri, label=Coloumn#coloumn.label, tables=Coloumn#coloumn.tables,
+    coloumns=[
+      {?COLOUMN_RANGE, Coloumn#coloumn.range},
+      {?COLOUMN_ARITY, Coloumn#coloumn.arity},
+      {?COLOUMN_OPTIONAL, Coloumn#coloumn.optional}
+    ] ++ Coloumn#coloumn.coloumns
   },
-  #item{properties=Properties}=Item,
-  case Property#property.inverse of
-    undefined -> Item;
-    Value -> Item#item{properties=[{?PROPERTY_INVERSE, Value}|Properties]}
+  #row{coloumns=Coloumns}=Row,
+  case Coloumn#coloumn.inverse of
+    undefined -> Row;
+    Value -> Row#row{coloumns=[{?COLOUMN_INVERSE, Value}|Coloumns]}
   end.
 
 json([]) -> mochijson2:encode([]);
@@ -127,49 +127,49 @@ json([First|Rest], Structs) ->
   json(Rest, [struct(First)|Structs]);
 json([], Structs) -> Structs.
 
-struct(Item=#item{uri=URI}) ->
-  Properties = case URI of
+struct(Row=#row{uri=URI}) ->
+  Coloumns = case URI of
     undefined -> [];
     _ -> [{?URI, URI}]
   end,
-  {struct, Properties++[
-    {?PROPERTY_LABEL, Item#item.label},
-    {?PROPERTY_TYPES, Item#item.types}
-  ] ++ resolve_properties(Item#item.properties)};
+  {struct, Coloumns++[
+    {?COLOUMN_LABEL, Row#row.label},
+    {?COLOUMN_TABLES, Row#row.tables}
+  ] ++ resolve_coloumns(Row#row.coloumns)};
 
-struct(Type=#type{}) -> struct(type2item(Type));
+struct(Table=#table{}) -> struct(table2row(Table));
 
-struct(Property=#property{}) -> struct(property2item(Property));
+struct(Coloumn=#coloumn{}) -> struct(coloumn2row(Coloumn));
 
 struct(Any) -> Any.
 
-resolve(Item=#item{}) -> struct(Item);
+resolve(Row=#row{}) -> struct(Row);
 resolve(URI) -> URI.
 
-resolve_properties([{Property, Value}|Rest]) ->
-  [{Property, resolve(Value)}|resolve_properties(Rest)];
-resolve_properties([]) -> [].
+resolve_coloumns([{Coloumn, Value}|Rest]) ->
+  [{Coloumn, resolve(Value)}|resolve_coloumns(Rest)];
+resolve_coloumns([]) -> [].
 
-json2item({struct, Elements}) ->
-  parse_item_elements(Elements, #item{}).
+json2row({struct, Elements}) ->
+  parse_row_elements(Elements, #row{}).
 
-json2type({struct, Elements}) ->
-  item2type(parse_item_elements(Elements, #item{})).
+json2table({struct, Elements}) ->
+  row2table(parse_row_elements(Elements, #row{})).
 
-json2property({struct, Elements}) ->
-  item2property(parse_item_elements(Elements, #item{})).
+json2coloumn({struct, Elements}) ->
+  row2coloumn(parse_row_elements(Elements, #row{})).
 
-parse_item_elements([{Key, Value}|Rest], Item=#item{properties=Properties}) ->
-  NewItem = case Key of
-    <<"uri">> -> Item#item{uri=Value};
-    <<"label">> -> Item#item{label=Value};
-    <<"types">> -> Item#item{types=Value};
-    _ -> Item#item{properties=[{Key, parse_property_value(Value)}|Properties]}
+parse_row_elements([{Key, Value}|Rest], Row=#row{coloumns=Coloumns}) ->
+  NewRow = case Key of
+    <<"uri">> -> Row#row{uri=Value};
+    <<"label">> -> Row#row{label=Value};
+    <<"tables">> -> Row#row{tables=Value};
+    _ -> Row#row{coloumns=[{Key, parse_coloumn_value(Value)}|Coloumns]}
   end,
-  parse_item_elements(Rest, NewItem);
-parse_item_elements([], Item) -> Item.
+  parse_row_elements(Rest, NewRow);
+parse_row_elements([], Row) -> Row.
 
-parse_property_value([]) -> [];
-parse_property_value([First|Rest]) -> [parse_property_value(First)|parse_property_value(Rest)];
-parse_property_value({struct, Elements}) -> json2item({struct, Elements});
-parse_property_value(Literal) -> Literal.
+parse_coloumn_value([]) -> [];
+parse_coloumn_value([First|Rest]) -> [parse_coloumn_value(First)|parse_coloumn_value(Rest)];
+parse_coloumn_value({struct, Elements}) -> json2row({struct, Elements});
+parse_coloumn_value(Literal) -> Literal.

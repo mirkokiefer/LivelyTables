@@ -6,48 +6,48 @@
 run() ->
   test_validate_core(),
   test_validate_sets(),
-  {atomic, {ok, success}} = t(fun test_write_properties/0),
-  {atomic, {ok, success}} = t(fun test_write_invalid_items/0),
-  {atomic, {ok, success}} = t(fun test_write_valid_items/0),
-  {atomic, {ok, success}} = t(fun test_update_valid_items/0),
-  {atomic, {ok, success}} = t(fun test_update_invalid_items/0),
-  {atomic, {ok, success}} = t(fun test_composite_items/0),
+  {atomic, {ok, success}} = t(fun test_write_coloumns/0),
+  {atomic, {ok, success}} = t(fun test_write_invalid_rows/0),
+  {atomic, {ok, success}} = t(fun test_write_valid_rows/0),
+  {atomic, {ok, success}} = t(fun test_update_valid_rows/0),
+  {atomic, {ok, success}} = t(fun test_update_invalid_rows/0),
+  {atomic, {ok, success}} = t(fun test_composite_rows/0),
   {ok, success}.
 
 test_validate_core() ->
-  {ok, success} = test_validate(test_data:core_types()),
-  {ok, success} = test_validate(test_data:core_properties()).
+  {ok, success} = test_validate(test_data:core_tables()),
+  {ok, success} = test_validate(test_data:core_coloumns()).
 
 test_validate_sets() ->
-  {ok, success} = test_validate(test_data:set_properties()),
-  {ok, success} = test_validate(test_data:set_types()).
+  {ok, success} = test_validate(test_data:set_coloumns()),
+  {ok, success} = test_validate(test_data:set_tables()).
 
-test_validate(Items) ->
-  Result = [store_interface:validate(Each) || Each <- Items],
+test_validate(Rows) ->
+  Result = [store_interface:validate(Each) || Each <- Rows],
   check_each_valid(Result).
 
-test_write_properties() ->
-  Result = [store_interface:write_property(Property) || Property <- test_data:properties()],
+test_write_coloumns() ->
+  Result = [store_interface:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],
   check_each_result(Result).
 
-test_write_invalid_items() ->
-  Result = [store_interface:write_item(Item) || Item <- test_data:invalid_items()],
+test_write_invalid_rows() ->
+  Result = [store_interface:write_row(Row) || Row <- test_data:invalid_rows()],
   check_each_invalid_result(Result).
 
-test_write_valid_items() ->
-  Result = [store_interface:write_item(Item) || Item <- test_data:items()],
+test_write_valid_rows() ->
+  Result = [store_interface:write_row(Row) || Row <- test_data:rows()],
   check_each_result(Result).
 
-test_update_valid_items() ->
-  Result = [store_interface:write_item(Item) || Item <- test_data:items_updated()],
+test_update_valid_rows() ->
+  Result = [store_interface:write_row(Row) || Row <- test_data:rows_updated()],
   check_each_result(Result).
 
-test_update_invalid_items() ->
-  Result = [store_interface:write_item(Item) || Item <- test_data:invalid_items_updated()],
+test_update_invalid_rows() ->
+  Result = [store_interface:write_row(Row) || Row <- test_data:invalid_rows_updated()],
   check_each_invalid_result(Result).
 
-test_composite_items() ->
-  Result = [store_interface:write_item(Item) || Item <- test_data:composite_items2()],
+test_composite_rows() ->
+  Result = [store_interface:write_row(Row) || Row <- test_data:composite_rows2()],
   check_each_result(Result).
 
 check_each_result(Result) ->

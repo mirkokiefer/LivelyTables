@@ -1,72 +1,72 @@
 
 % Property Types
--define(PROPERTY_TYPE_STRING, <<"string">>).
--define(PROPERTY_TYPE_BOOLEAN, <<"boolean">>).
--define(PROPERTY_TYPE_NUMBER, <<"number">>).
+-define(COLOUMN_TYPE_STRING, <<"string">>).
+-define(COLOUMN_TYPE_BOOLEAN, <<"boolean">>).
+-define(COLOUMN_TYPE_NUMBER, <<"number">>).
 
 -define(ARITY_ONE, <<"one">>).
 -define(ARITY_MANY, <<"many">>).
 
 % Core Types
--define(ITEM, <<"item">>).
--define(TYPE, <<"type">>).
--define(PROPERTY, <<"property">>).
+-define(ROW, <<"row">>).
+-define(TABLE, <<"table">>).
+-define(COLOUMN, <<"coloumn">>).
 -define(VIEW, <<"view">>).
 -define(HIERARCHY, <<"hierarchy">>).
 
 % Core Properties
 -define(URI, <<"uri">>).
--define(PROPERTY_LABEL, <<"label">>).
--define(PROPERTY_TYPES, <<"types">>).
--define(PROPERTY_LEGALPROPERTIES, <<"legal_properties">>).
--define(PROPERTY_PARENTS, <<"parents">>).
--define(PROPERTY_RANGE, <<"range">>).
--define(PROPERTY_ARITY, <<"arity">>).
--define(PROPERTY_OPTIONAL, <<"optional">>).
--define(PROPERTY_INVERSE, <<"inverse">>).
+-define(COLOUMN_LABEL, <<"label">>).
+-define(COLOUMN_TABLES, <<"tables">>).
+-define(COLOUMN_LEGALCOLOUMNS, <<"legal_coloumns">>).
+-define(COLOUMN_PARENTS, <<"parents">>).
+-define(COLOUMN_RANGE, <<"range">>).
+-define(COLOUMN_ARITY, <<"arity">>).
+-define(COLOUMN_OPTIONAL, <<"optional">>).
+-define(COLOUMN_INVERSE, <<"inverse">>).
 
 % Set Types
 -define(SET, <<"set">>).
--define(ITEM_LIST, <<"item_list">>).
+-define(ROW_LIST, <<"row_list">>).
 -define(PROJECT_SET, <<"project_set">>).
 -define(SET_OPERATION, <<"set_operation">>).
 -define(INTERSECTION, <<"intersection">>).
 -define(UNION, <<"union">>).
 
 -define(TRANSFORM_SET, <<"set_transform">>).
--define(TRANSFORM_ITEMS_TO_VALUES, <<"transform_items_to_values">>).
--define(TRANSFORM_ITEMS_TO_PROPERTIES, <<"transform_items_to_properties">>).
--define(TRANSFORM_PROPERTIES_TO_ITEMS, <<"transform_properties_to_items">>).
--define(TRANSFORM_TYPES_TO_ITEMS, <<"transform_types_to_items">>).
+-define(TRANSFORM_ROWS_TO_VALUES, <<"transform_rows_to_values">>).
+-define(TRANSFORM_ROWS_TO_COLOUMNS, <<"transform_rows_to_coloumns">>).
+-define(TRANSFORM_COLOUMNS_TO_ROWS, <<"transform_coloumns_to_rows">>).
+-define(TRANSFORM_TABLES_TO_ROWS, <<"transform_tables_to_rows">>).
 
 -define(FILTER, <<"filter">>).
 
 -define(CONDITION, <<"condition">>).
--define(PROPERTY_EXISTS_CONDITION, <<"property_exists_condition">>).
+-define(COLOUMN_EXISTS_CONDITION, <<"coloumn_exists_condition">>).
 -define(VALUE_CONDITION, <<"value_condition">>).
 -define(VALUE_CONDITION_EQUALS, <<"value_condition_equals">>).
 
 % Set Properties
--define(PROPERTY_ITEMS, <<"property_items">>).
--define(PROPERTY_SET, <<"property_set">>).
--define(PROPERTY_SETS, <<"property_sets">>).
--define(PROPERTY_PROPERTY_SET, <<"property_property_set">>).
--define(PROPERTY_CONDITIONS, <<"property_conditions">>).
--define(PROPERTY_VALUE, <<"property_value">>).
+-define(COLOUMN_ROWS, <<"coloumn_rows">>).
+-define(COLOUMN_SET, <<"coloumn_set">>).
+-define(COLOUMN_SETS, <<"coloumn_sets">>).
+-define(COLOUMN_COLOUMN_SET, <<"coloumn_coloumn_set">>).
+-define(COLOUMN_CONDITIONS, <<"coloumn_conditions">>).
+-define(COLOUMN_VALUE, <<"coloumn_value">>).
 
--record(item, {uri, label, types=[], properties=[]}).
--record(type, {uri, label, types=[?TYPE], properties=[], parents=[?ITEM], legal_properties=[]}).
--record(property, {uri, label, types=[?PROPERTY], properties=[], range=[?ITEM], arity=?ARITY_ONE,
+-record(row, {uri, label, tables=[], coloumns=[]}).
+-record(table, {uri, label, tables=[?TABLE], coloumns=[], parents=[?ROW], legal_coloumns=[]}).
+-record(coloumn, {uri, label, tables=[?COLOUMN], coloumns=[], range=[?ROW], arity=?ARITY_ONE,
   inverse, optional=false}).
 
 % Set records
 -record(union, {sets}).
 -record(intersection, {sets}).
 -record(filter, {set, conditions}).
--record(items2values, {items, properties}).
--record(items2properties, {items}).
--record(properties2items, {properties}).
--record(types2items, {types}).
+-record(rows2values, {rows, coloumns}).
+-record(rows2coloumns, {rows}).
+-record(coloumns2rows, {coloumns}).
+-record(tables2rows, {tables}).
 
--record(value_equals, {properties, value}).
--record(property_exists, {properties}).
+-record(value_equals, {coloumns, value}).
+-record(coloumn_exists, {coloumns}).
