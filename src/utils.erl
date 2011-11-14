@@ -15,7 +15,9 @@ time_seconds(Fun) ->
   Time = timer:now_diff(EndT, StartT)/1000000,
   {{time, Time}, {result, Result}}.
 
-write_file(File, List) ->  {ok, S} = file:open(File, write),  lists:foreach(fun(X) -> io:format(S, "~p.~n",[X]) end, List), file:close(S).
+write_file(File, List) ->
+  {ok, S} = file:open(File, write),
+  lists:foreach(fun(X) -> io:format(S, "~p.~n",[X]) end, List), file:close(S).
 
 read_file(File) -> file:consult(File).
 
