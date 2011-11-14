@@ -68,13 +68,13 @@ set_transforms() ->
   SetTransform = #table{uri= ?TRANSFORM_SET, label= <<"Set Transform">>, parents=[?SET], legal_coloumns=[
     ?COLOUMN_SET
   ]},
-  RowsToValues = #table{uri= ?TRANSFORM_ROWS_TO_VALUES, label= <<"Rows -> Values">>,
+  RowsToValues = #table{uri= ?TRANSFORM_CELLS_AS_TABLE, label= <<"Rows -> Values">>,
     parents=[?TRANSFORM_SET], legal_coloumns=[?COLOUMN_COLOUMN_SET]},
-  RowsToColoumns = #table{uri= ?TRANSFORM_COLOUMNS_TO_ROWS, label= <<"Rows -> Coloumns">>,
+  RowsToColoumns = #table{uri= ?TRANSFORM_ROWS_WITH_COLOUMNS, label= <<"Rows -> Coloumns">>,
     parents=[?TRANSFORM_SET], legal_coloumns=[]},
-  ColoumnsToRows = #table{uri= ?TRANSFORM_COLOUMNS_TO_ROWS, label= <<"Coloumns -> Rows">>,
+  ColoumnsToRows = #table{uri= ?TRANSFORM_ROWS_WITH_COLOUMNS, label= <<"Coloumns -> Rows">>,
     parents=[?TRANSFORM_SET], legal_coloumns=[]},
-  TablesToRows = #table{uri= ?TRANSFORM_TABLES_TO_ROWS, label= <<"Tables -> Rows">>,
+  TablesToRows = #table{uri= ?TRANSFORM_ROWS_IN_TABLES, label= <<"Tables -> Rows">>,
     parents=[?TRANSFORM_SET], legal_coloumns=[]},
 
   [SetTransform, RowsToValues, RowsToColoumns, ColoumnsToRows, TablesToRows].
@@ -178,7 +178,7 @@ composite_rows2() ->
   [Alex, Fred].
 
 sample_set() ->
-  Persons = #row{tables=[?TRANSFORM_TABLES_TO_ROWS], coloumns=[
+  Persons = #row{tables=[?TRANSFORM_ROWS_IN_TABLES], coloumns=[
     {?COLOUMN_SET, row_list([<<"employee">>])}
   ]},
   ColoumnExists = #row{tables=[?COLOUMN_EXISTS_CONDITION], coloumns=[

@@ -29,17 +29,17 @@ set_operation2records(?UNION, SetRecords, _Set) ->
 set_operation2records(?INTERSECTION, SetRecords, _Set) ->
   #intersection{sets=SetRecords}.
 
-set_transform2records(?TRANSFORM_ROWS_TO_VALUES, TransformSet, Set) ->
+set_transform2records(?TRANSFORM_CELLS_AS_TABLE, TransformSet, Set) ->
   ColoumnSet = utils:row_coloumn(?COLOUMN_COLOUMN_SET, Set),
   #rows2values{rows=TransformSet, coloumns=set2records(ColoumnSet)};
 
-set_transform2records(?TRANSFORM_ROWS_TO_COLOUMNS, TransformSet, _Set) ->
+set_transform2records(?TRANSFORM_COLOUMNS_AS_TABLE, TransformSet, _Set) ->
   #rows2coloumns{rows=TransformSet};
 
-set_transform2records(?TRANSFORM_COLOUMNS_TO_ROWS, TransformSet, _Set) ->
+set_transform2records(?TRANSFORM_ROWS_WITH_COLOUMNS, TransformSet, _Set) ->
   #coloumns2rows{coloumns=TransformSet};
 
-set_transform2records(?TRANSFORM_TABLES_TO_ROWS, TransformSet, _Set) ->
+set_transform2records(?TRANSFORM_ROWS_IN_TABLES, TransformSet, _Set) ->
   #tables2rows{tables=TransformSet}.
 
 conditions2records(Conditions) ->

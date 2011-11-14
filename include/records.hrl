@@ -34,10 +34,10 @@
 -define(UNION, <<"union">>).
 
 -define(TRANSFORM_SET, <<"set_transform">>).
--define(TRANSFORM_ROWS_TO_VALUES, <<"transform_rows_to_values">>).
--define(TRANSFORM_ROWS_TO_COLOUMNS, <<"transform_rows_to_coloumns">>).
--define(TRANSFORM_COLOUMNS_TO_ROWS, <<"transform_coloumns_to_rows">>).
--define(TRANSFORM_TABLES_TO_ROWS, <<"transform_tables_to_rows">>).
+-define(TRANSFORM_CELLS_AS_TABLE, <<"transform_cells_as_table">>).
+-define(TRANSFORM_COLOUMNS_AS_TABLE, <<"transform_coloumns_as_table">>).
+-define(TRANSFORM_ROWS_WITH_COLOUMNS, <<"transform_rows_with_coloumns">>).
+-define(TRANSFORM_ROWS_IN_TABLES, <<"transform_rows_in_tables">>).
 
 -define(FILTER, <<"filter">>).
 
