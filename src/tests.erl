@@ -1,7 +1,9 @@
 -module(tests).
 -export([run/0]).
 
-run() ->
+run() -> utils:time_seconds(fun tests/0).
+
+tests() ->
   store:clear(),
   git:reset(),
   {ok, success} = store_test:run(),

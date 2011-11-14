@@ -1,5 +1,5 @@
 -module(utils).
--export([write_file/2, read_file/1, log/1, encode/1,
+-export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
   item_property/2, types_with_legal_properties/1,
   item2propertylist/1, propertylist2item/1,
@@ -7,6 +7,13 @@
   json/1, json2item/1, json2type/1, json2property/1]).
 
 -include("../include/records.hrl").
+
+time_seconds(Fun) ->
+  StartT = now(),
+  Result = Fun(),
+  EndT = now(),
+  Time = timer:now_diff(EndT, StartT)/1000000,
+  {{time, Time}, {result, Result}}.
 
 write_file(File, List) ->  {ok, S} = file:open(File, write),  lists:foreach(fun(X) -> io:format(S, "~p.~n",[X]) end, List), file:close(S).
 
