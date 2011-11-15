@@ -68,7 +68,7 @@ write_all(Records) ->
   {ok, success}.
 
 write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
-  ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(Coloumns)},
+  ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(lists:sort(Coloumns))},
   #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
   RowTableRecord = #rows{uri=URI, label=Label, coloumns=ResolvedColoumns},
   RowTableTableRecords = [#rows2table{row=URI, table=Table} || Table <- ResolvedTables],
