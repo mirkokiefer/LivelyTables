@@ -103,9 +103,8 @@ validate_row(Row) ->
   {ValidTable and ValidColoumns, TableErrors++ColoumnErrors}.
 
 validate_table_requirements(Row=#row{tables=Tables}) ->
-  SubTableURIs = utils:set(Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables])),
-  SubTables = [store:read_table(Each) || Each <- SubTableURIs],
-  Results = [validate_legal_coloumns(LegalColoumns, Row) || #table{legal_coloumns=LegalColoumns} <- SubTables],
+  LegalCols = lists:flatten([read_coloumns_of_table(Table) || Table <- Tables]),
+  Results = [validate_legal_coloumns(LegalColoumns, Row) || #table{legal_coloumns=LegalColoumns} <- LegalCols],
   sum_result(Results).
 
 validate_legal_coloumns(Coloumns, Row) -> validate_legal_coloumns(Coloumns, Row, {true, []}).
