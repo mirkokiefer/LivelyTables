@@ -27,13 +27,13 @@ core_coloumns() ->
   Label = #coloumn{uri= ?COLOUMN_LABEL, label= <<"Label">>, range=?COLOUMN_TYPE_STRING},
   Tables = #coloumn{uri= ?COLOUMN_TABLES, label= <<"Tables">>, range=?TABLE, arity=?ARITY_MANY},
   Parents = #coloumn{uri= ?COLOUMN_PARENTS, label= <<"Parents">>, range=?TABLE, arity=?ARITY_MANY},
-  LegalProps = #coloumn{uri= ?COLOUMN_LEGALCOLOUMNS, label= <<"Legal Coloumns">>,
+  LegalColoumns = #coloumn{uri= ?COLOUMN_LEGALCOLOUMNS, label= <<"Legal Coloumns">>,
     range=?COLOUMN, arity=?ARITY_MANY},
   Range = #coloumn{uri=?COLOUMN_RANGE, label= <<"Range">>, range=?TABLE, arity=?ARITY_ONE},
   Arity = #coloumn{uri=?COLOUMN_ARITY, label= <<"Arity">>, range=?COLOUMN_TYPE_STRING},
   Inverse = #coloumn{uri=?COLOUMN_INVERSE, label= <<"Inverse">>, range=?COLOUMN, optional=true},
   Optional = #coloumn{uri=?COLOUMN_OPTIONAL, label= <<"Optional">>, range=?COLOUMN_TYPE_BOOLEAN},
-  [Label, Tables, Parents, LegalProps, Range, Arity, Inverse, Optional].
+  [Label, Tables, Parents, LegalColoumns, Range, Arity, Inverse, Optional].
 
 set_coloumns() ->
   Sets = #coloumn{uri= ?COLOUMN_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},

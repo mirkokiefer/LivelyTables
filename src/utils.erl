@@ -51,14 +51,14 @@ row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
     {_, Value} -> Value
   end.
 
-tables_with_legal_coloumns(ValidLegalProps) -> tables_with_legal_props(?ROW, ValidLegalProps).
+tables_with_legal_coloumns(ValidLegalColoumns) -> tables_with_legal_props(?ROW, ValidLegalColoumns).
 
-tables_with_legal_props(CurrentTableURI, ValidLegalProps) ->
-  #table{legal_coloumns=LegalProps} = store_interface:read_table(CurrentTableURI),
-  case utils:is_subset(ValidLegalProps, LegalProps) of
+tables_with_legal_props(CurrentTableURI, ValidLegalColoumns) ->
+  #table{legal_coloumns=LegalColoumns} = store_interface:read_table(CurrentTableURI),
+  case utils:is_subset(ValidLegalColoumns, LegalColoumns) of
     true -> [CurrentTableURI];
     false -> Subtables = store_interface:read_tables_including_directly(CurrentTableURI),
-      lists:flatten([tables_with_legal_props(Subtable, ValidLegalProps) || Subtable <- Subtables])
+      lists:flatten([tables_with_legal_props(Subtable, ValidLegalColoumns) || Subtable <- Subtables])
   end.
 
 row2coloumnlist(#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->

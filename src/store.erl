@@ -72,9 +72,9 @@ write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
   #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
   RowTableRecord = #rows{uri=URI, label=Label, coloumns=ResolvedColoumns},
   RowTableTableRecords = [#rows2table{row=URI, table=Table} || Table <- ResolvedTables],
-  TableParentTableRecords = table_includes_records(Row),
+  TableSubTableRecords = table_includes_records(Row),
   git:write(ResolvedRow),
-  store_table_records([RowTableRecord] ++ RowTableTableRecords ++ TableParentTableRecords);
+  store_table_records([RowTableRecord] ++ RowTableTableRecords ++ TableSubTableRecords);
 
 write(Table=#table{}) ->
   write(utils:table2row(Table));
@@ -122,9 +122,9 @@ store_table_records([]) -> {ok, success}.
 
 read_row(URI) ->
   case read(rows, URI) of
-    [#rows{uri=URI, label=Label, coloumns=Props}] ->
+    [#rows{uri=URI, label=Label, coloumns=Coloumns}] ->
       Tables = [Table || #rows2table{table=Table} <- read(rows2table, URI)],
-      #row{uri=URI, label=Label, tables=Tables, coloumns=Props};
+      #row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns};
     [] -> undefined
   end.
 

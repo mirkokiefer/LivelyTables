@@ -16,11 +16,11 @@ read_row(RowURI) -> store:read_row(RowURI).
 
 read_row(RowURI, TableURI) ->
   Row = #row{coloumns=Coloumns} = store:read_row(RowURI),
-  ParentTableURIs = [TableURI|store:read_subtables(TableURI)],
-  ParentTables = [store:read_table(URI) || URI <- ParentTableURIs],
-  LegalProps = lists:flatten([Legal || #table{legal_coloumns=Legal} <- ParentTables]),
-  FilteredProps = [Coloumn || Coloumn={URI,_} <- Coloumns, lists:member(URI, LegalProps)],
-  Row#row{coloumns=FilteredProps}.
+  SubTableURIs = [TableURI|store:read_subtables(TableURI)],
+  SubTables = [store:read_table(URI) || URI <- SubTableURIs],
+  LegalColoumns = lists:flatten([Legal || #table{legal_coloumns=Legal} <- SubTables]),
+  FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns, lists:member(URI, LegalColoumns)],
+  Row#row{coloumns=FilteredColoumns}.
 
 read_table(TableURI) -> store:read_table(TableURI).
 
@@ -38,7 +38,7 @@ read_tables_of_row(RowURI) -> store:read_tables_of_row(RowURI).
 
 read_coloumns_of_table(TableURI) ->
   TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],
-  lists:flatten([LegalProps || #table{legal_coloumns=LegalProps} <- TableChain]).
+  lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain]).
 
 write_row(Row) -> write_row(Row, ?ROW).
 
@@ -87,11 +87,11 @@ merge_rows(NewRow, OldRow, NewTable) ->
 
 merge_coloumns(OldColoumns, NewColoumns, LegalColoumns) ->
   NewColoumnURIs = [URI || {URI, _} <- NewColoumns],
-  LeftOutProps = [Prop || Prop={URI,_} <- OldColoumns,
+  LeftOutColoumns = [Prop || Prop={URI,_} <- OldColoumns,
     lists:member(URI, NewColoumnURIs) == false,
     lists:member(URI, LegalColoumns) == false
   ],
-  LeftOutProps ++ NewColoumns.
+  LeftOutColoumns ++ NewColoumns.
 
 validate(Table = #table{}) -> validate_row(utils:table2row(Table));
 validate(Coloumn = #coloumn{}) -> validate_row(utils:coloumn2row(Coloumn));
@@ -103,9 +103,9 @@ validate_row(Row) ->
   {ValidTable and ValidColoumns, TableErrors++ColoumnErrors}.
 
 validate_table_requirements(Row=#row{tables=Tables}) ->
-  ParentTableURIs = utils:set(Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables])),
-  ParentTables = [store:read_table(Each) || Each <- ParentTableURIs],
-  Results = [validate_legal_coloumns(LegalProps, Row) || #table{legal_coloumns=LegalProps} <- ParentTables],
+  SubTableURIs = utils:set(Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables])),
+  SubTables = [store:read_table(Each) || Each <- SubTableURIs],
+  Results = [validate_legal_coloumns(LegalColoumns, Row) || #table{legal_coloumns=LegalColoumns} <- SubTables],
   sum_result(Results).
 
 validate_legal_coloumns(Coloumns, Row) -> validate_legal_coloumns(Coloumns, Row, {true, []}).
