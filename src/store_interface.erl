@@ -8,8 +8,7 @@
 
 -include("../include/records.hrl").
 
-transaction(Fun) ->
-  store:transaction(Fun).
+transaction(Fun) -> store:transaction(Fun).
 
 read_row(Row=#row{}) -> Row;
 
