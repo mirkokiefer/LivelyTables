@@ -68,7 +68,7 @@ write_all(Records) ->
   {ok, success}.
 
 write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
-  ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(lists:sort(Coloumns))},
+  ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(Coloumns)},
   #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
   RowTableRecord = #rows{uri=URI, label=Label, coloumns=ResolvedColoumns},
   RowTableTableRecords = [#rows2table{row=URI, table=Table} || Table <- ResolvedTables],
@@ -178,7 +178,7 @@ read_tables_including_directly(TableURI) ->
 
 read_coloumns_of_table(TableURI) ->
   TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],
-  lists:sort(lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain])).
+  lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain]).
 
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,

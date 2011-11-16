@@ -19,7 +19,7 @@ read_row(RowURI, TableURI) ->
   LegalColoumns = read_coloumns_of_table(TableURI),
   MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
   FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
-  Row#row{coloumns=FilteredColoumns}.
+  Row#row{coloumns=lists:sort(FilteredColoumns)}.
 
 read_table(TableURI) -> store:read_table(TableURI).
 
@@ -35,7 +35,7 @@ read_subtables(TableURI) -> store:read_subtables(TableURI).
 
 read_tables_of_row(RowURI) -> store:read_tables_of_row(RowURI).
 
-read_coloumns_of_table(TableURI) -> store:read_coloumns_of_table(TableURI).
+read_coloumns_of_table(TableURI) -> lists:sort(store:read_coloumns_of_table(TableURI)).
 
 write_row(Row) -> write_row(Row, ?ROW).
 
