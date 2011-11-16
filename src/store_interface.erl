@@ -19,7 +19,8 @@ read_row(RowURI, TableURI) ->
   SubTableURIs = [TableURI|store:read_subtables(TableURI)],
   SubTables = [store:read_table(URI) || URI <- SubTableURIs],
   LegalColoumns = lists:flatten([Legal || #table{legal_coloumns=Legal} <- SubTables]),
-  FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns, lists:member(URI, LegalColoumns)],
+  MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
+  FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
   Row#row{coloumns=FilteredColoumns}.
 
 read_table(TableURI) -> store:read_table(TableURI).
@@ -174,6 +175,15 @@ validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{tables=Tables}, _Row) ->
   end;
 validate_coloumn_range(Range, ?ARITY_ONE, _, Value, _Row) ->
   {lists:member(Range, store:read_tables_of_row(Value)), []}.
+
+missing_coloumns(?ROW, _, _) -> [];
+missing_coloumns(?TABLE, _, _) -> [];
+missing_coloumns(_URI, ColoumnValues, LegalColoumns) ->
+  Coloumns = coloumnvalues2columns(ColoumnValues),
+  MissingColoumns = (LegalColoumns -- Coloumns) -- [?COLOUMN_LABEL, ?COLOUMN_TABLES],
+  [{Coloumn, undefined} || Coloumn <- MissingColoumns].
+
+coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues].
 
 %Merges Error results
 sum_result(Result) -> sum_result(Result, {true, []}).

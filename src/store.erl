@@ -194,13 +194,3 @@ do(Q) ->
   {atomic, Val} = mnesia:transaction(F),
   Val.
 
-missing_coloumns(?ROW, _, _) -> [];
-missing_coloumns(?TABLE, _, _) -> [];
-missing_coloumns(URI, ColoumnValues, Tables) ->
-  utils:log(URI),
-  LegalCols = utils:set(lists:flatten([read_coloumns_of_table(Table) || Table <- Tables])),
-  Coloumns = coloumnvalues2columns(ColoumnValues),
-  MissingColoumns = (LegalCols -- Coloumns) -- [?COLOUMN_LABEL, ?COLOUMN_TABLES],
-  [{Coloumn, undefined} || Coloumn <- MissingColoumns].
-
-coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues].
