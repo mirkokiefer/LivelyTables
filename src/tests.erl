@@ -1,11 +1,12 @@
 -module(tests).
 -export([run/0]).
 
-run() -> utils:time_seconds(fun tests/0).
-
-tests() ->
+run() ->
   store:clear(),
   git:reset(),
+  utils:time_seconds(fun tests/0).
+
+tests() ->
   {ok, success} = store_test:run(),
   {ok, success} = store_interface_test:run(),
   {ok, success} = set_interface_test:run(),
