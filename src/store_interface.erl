@@ -16,9 +16,7 @@ read_row(RowURI) -> store:read_row(RowURI).
 
 read_row(RowURI, TableURI) ->
   Row = #row{coloumns=Coloumns} = store:read_row(RowURI),
-  SubTableURIs = [TableURI|store:read_subtables(TableURI)],
-  SubTables = [store:read_table(URI) || URI <- SubTableURIs],
-  LegalColoumns = lists:flatten([Legal || #table{legal_coloumns=Legal} <- SubTables]),
+  LegalColoumns = read_coloumns_of_table(TableURI),
   MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
   FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
   Row#row{coloumns=FilteredColoumns}.
