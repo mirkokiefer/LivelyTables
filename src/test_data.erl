@@ -11,7 +11,7 @@ core_tables() ->
     ?COLOUMN_LABEL,
     ?COLOUMN_TABLES
   ]},
-  Table = #table{uri= ?TABLE, label= <<"Table">>, legal_coloumns=[
+  Table = #table{uri= ?TABLE, label= <<"Table">>, tables=[?TABLE], legal_coloumns=[
     ?COLOUMN_LEGALCOLOUMNS,
     ?COLOUMN_PARENTS
   ]},

@@ -3,7 +3,7 @@
 -export([init/0, reset/0, start/0, stop/0, clear/0]).
 -export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
   read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
-  read_subtables/1, read_direct_subtables/1,
+  read_subtables/1, read_direct_subtables/1, read_coloumns_of_table/1,
   read_tables_including/1, read_tables_including_directly/1]).
 
 -include("../include/records.hrl").
@@ -176,6 +176,10 @@ read_tables_including_directly(TableURI) ->
   {atomic, Records} = mnesia:transaction(F),
   [Subtable || #table_includes{table=Subtable} <- Records].
 
+read_coloumns_of_table(TableURI) ->
+  TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],
+  lists:sort(lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain])).
+
 read(Table, Key) ->
   F = fun() -> mnesia:read(Table, Key) end,
   {atomic, Result} = mnesia:transaction(F),
@@ -189,3 +193,14 @@ do(Q) ->
   F = fun() -> qlc:e(Q) end,
   {atomic, Val} = mnesia:transaction(F),
   Val.
+
+missing_coloumns(?ROW, _, _) -> [];
+missing_coloumns(?TABLE, _, _) -> [];
+missing_coloumns(URI, ColoumnValues, Tables) ->
+  utils:log(URI),
+  LegalCols = utils:set(lists:flatten([read_coloumns_of_table(Table) || Table <- Tables])),
+  Coloumns = coloumnvalues2columns(ColoumnValues),
+  MissingColoumns = (LegalCols -- Coloumns) -- [?COLOUMN_LABEL, ?COLOUMN_TABLES],
+  [{Coloumn, undefined} || Coloumn <- MissingColoumns].
+
+coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues].
