@@ -122,29 +122,21 @@ json(Element) -> mochijson2:encode(struct(Element)).
 
 struct([First|Rest]) -> [struct(First)|struct(Rest)];
 
-struct(Row=#row{uri=URI}) ->
-  Coloumns = case URI of
+struct(Row=#row{uri=URI, coloumns=Coloumns}) ->
+  URIColoumns = case URI of
     undefined -> [];
     _ -> [{?URI, URI}]
   end,
-  {struct, Coloumns++[
+  {struct, URIColoumns ++ [
     {?COLOUMN_LABEL, Row#row.label},
     {?COLOUMN_TABLES, Row#row.tables}
-  ] ++ resolve_coloumns(Row#row.coloumns)};
+  ] ++ [{Coloumn, struct(Value)} || {Coloumn, Value} <- Coloumns]};
 
 struct(Table=#table{}) -> struct(table2row(Table));
 
 struct(Coloumn=#coloumn{}) -> struct(coloumn2row(Coloumn));
 
 struct(Any) -> Any.
-
-resolve([First|Rest]) -> [resolve(First)|resolve(Rest)];
-resolve(Row=#row{}) -> struct(Row);
-resolve(URI) -> URI.
-
-resolve_coloumns([{Coloumn, Value}|Rest]) ->
-  [{Coloumn, resolve(Value)}|resolve_coloumns(Rest)];
-resolve_coloumns([]) -> [].
 
 json2row({struct, Elements}) ->
   parse_row_elements(Elements, #row{}).
