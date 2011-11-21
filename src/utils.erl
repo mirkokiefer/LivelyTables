@@ -118,16 +118,9 @@ coloumn2row(Coloumn) ->
     Value -> Row#row{coloumns=[{?COLOUMN_INVERSE, Value}|Coloumns]}
   end.
 
-json([]) -> mochijson2:encode([]);
-
-json([First|Rest]) ->
-  mochijson2:encode(json([First|Rest], []));
-
 json(Element) -> mochijson2:encode(struct(Element)).
 
-json([First|Rest], Structs) ->
-  json(Rest, [struct(First)|Structs]);
-json([], Structs) -> Structs.
+struct([First|Rest]) -> [struct(First)|struct(Rest)];
 
 struct(Row=#row{uri=URI}) ->
   Coloumns = case URI of
