@@ -145,6 +145,7 @@ struct(Coloumn=#coloumn{}) -> struct(coloumn2row(Coloumn));
 
 struct(Any) -> Any.
 
+resolve([First|Rest]) -> [resolve(First)|resolve(Rest)];
 resolve(Row=#row{}) -> struct(Row);
 resolve(URI) -> URI.
 
