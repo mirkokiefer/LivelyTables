@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(pluggable_store).
 
 -export([start/0, stop/0, reset/0, clear/0]).
