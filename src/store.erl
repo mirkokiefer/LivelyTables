@@ -6,7 +6,7 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(store).
+-module(store, [Store]).
 -export([start/0, stop/0, reset/0, clear/0]).
 -export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
   read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
@@ -15,17 +15,17 @@
 
 -include("../include/records.hrl").
 
-start() -> pluggable_store:start().
+start() -> Store:start().
 
-stop() -> pluggable_store:stop().
+stop() -> Store:stop().
 
 % deletes and re-creates the schema
-reset() -> pluggable_store:reset().
+reset() -> Store:reset().
 
 % deletes all table entries
-clear() -> pluggable_store:clear().
+clear() -> Store:clear().
 
-transaction(Fun) -> pluggable_store:transaction(Fun).
+transaction(Fun) -> Store:transaction(Fun).
 
 write_all(Records) ->
   [write(Record) || Record <- Records],
@@ -38,7 +38,7 @@ write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
   RowTableTableRecords = [#db_rows2table{row=URI, table=Table} || Table <- ResolvedTables],
   TableSubTableRecords = db_table_includes_records(Row),
   git:write(ResolvedRow),
-  pluggable_store:write([RowTableRecord] ++ RowTableTableRecords ++ TableSubTableRecords);
+  Store:write([RowTableRecord] ++ RowTableTableRecords ++ TableSubTableRecords);
 
 write(Table=#table{}) ->
   write(utils:table2row(Table));
@@ -80,9 +80,9 @@ resolve_coloumns([{Coloumn, Value}|Rest]) ->
 resolve_coloumns([]) -> [].
 
 read_row(URI) ->
-  case pluggable_store:read(db_rows, URI) of
+  case Store:read_rows(URI) of
     [#db_rows{uri=URI, label=Label, coloumns=Coloumns}] ->
-      Tables = [Table || #db_rows2table{table=Table} <- pluggable_store:read(db_rows2table, URI)],
+      Tables = read_direct_tables_of_row(URI),
       #row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns};
     [] -> undefined
   end.
@@ -103,7 +103,7 @@ read_coloumn(URI) ->
   end.
 
 read_direct_tables_of_row(RowURI) ->
-  [Table || #db_rows2table{table=Table} <- pluggable_store:read(db_rows2table, RowURI)].
+  [Table || #db_rows2table{table=Table} <- Store:read_tables_of_row(RowURI)].
 
 read_tables_of_row(RowURI) -> utils:set(read_tables_of_row_internal(RowURI)).
 
@@ -114,20 +114,20 @@ read_tables_of_row_internal(RowURI) ->
 read_rows_of_table(TableURI) ->
   lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_tables_including(TableURI)]]).
 
-read_direct_rows_of_table(TableURI) -> pluggable_store:read_rows_of_table(TableURI).
+read_direct_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
 
 read_subtables(TableURI) ->
   DirectParents = read_direct_subtables(TableURI),
   DirectParents ++ lists:flatten([read_subtables(Parent) || Parent <- DirectParents]).
 
 read_direct_subtables(TableURI) ->
-  [Parent || #db_table_includes{included_table=Parent} <- pluggable_store:read(db_table_includes, TableURI)].
+  [Parent || #db_table_includes{included_table=Parent} <- Store:read_subtables(TableURI)].
 
 read_tables_including(TableURI) ->
   DirectSubtables = read_tables_including_directly(TableURI),
   DirectSubtables ++ lists:flatten([read_tables_including(Each) || Each <- DirectSubtables]).
 
-read_tables_including_directly(TableURI) -> pluggable_store:read_included_tables(TableURI).
+read_tables_including_directly(TableURI) -> Store:read_tables_including(TableURI).
 
 read_coloumns_of_table(TableURI) ->
   TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],

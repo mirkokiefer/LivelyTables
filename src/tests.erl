@@ -4,11 +4,12 @@
 -record(trace_data, {function, properties}).
 
 run() ->
-  utils:time_seconds(fun tests/0).
+  Store = test_store(),
+  Store:reset(),
+  git:reset(),
+  utils:time_seconds(fun() -> tests(Store) end).
   
 run_profiling() ->
-  store:clear(),
-  git:reset(),
   start_trace(),
   run(),
   stop_trace().
@@ -17,11 +18,22 @@ start_trace() -> fprof:trace(start, "sapiento.trace").
 
 stop_trace() -> fprof:trace(stop).
 
-tests() ->
-  {ok, success} = store_test:run(),
-  {ok, success} = store_interface_test:run(),
-  {ok, success} = set_interface_test:run(),
-  {ok, success} = git_test:run().
+test_store() ->
+  PluggableStore = pluggable_store:new(rows_test, rows2table_test, table_includes_test),
+  store:new(PluggableStore).
+
+test_store_interface(Store) -> store_interface:new(Store).
+
+tests(Store) ->
+  StoreInterface = test_store_interface(Store),
+  StoreTest = store_test:new(Store),
+  StoreInterfaceTest = store_interface_test:new(StoreInterface),
+  SetInterfaceTest = set_interface_test:new(StoreInterface),
+  GitTest = git_test:new(StoreInterface),
+  {ok, success} = StoreTest:run(),
+  {ok, success} = StoreInterfaceTest:run(),
+  {ok, success} = SetInterfaceTest:run(),
+  {ok, success} = GitTest:run().
 
 analyse() ->
   fprof:profile(file, "sapiento.trace"),
@@ -29,6 +41,7 @@ analyse() ->
 
 init_tables() ->
   reset_tables(),
+  ets:new(trace_misc, [named_table, set, public]),
   ets:new(trace_data, [named_table, set, public, {keypos, 2}]),
   ets:new(trace_functions, [named_table, duplicate_bag, public]).
 
@@ -44,7 +57,7 @@ store_trace_data(TraceData=#trace_data{function={Module, Fun, Arity}}) ->
   ets:insert(trace_functions, {Module, {Fun, Arity}}).
   
 store_totals(Totals) ->
-  ets:insert(trace_data, {totals, ).
+  ets:insert(trace_misc, {totals, Totals}).
 
 read_trace_data(Module) ->
   Funs = read_funs_of_module(Module),
@@ -75,7 +88,9 @@ parse() ->
   {ok, Data} = utils:read_file("sapiento.txt"),
   parse_data(Data).
   
-parse_data([_Options, _Totals, _|Functions]) -> parse_functions(Functions).
+parse_data([_Options, Totals, _|Functions]) ->
+  store_totals(Totals),
+  parse_functions(Functions).
 
 parse_functions([First|Rest]) -> parse_function(First), parse_functions(Rest);
 parse_functions([]) -> done.

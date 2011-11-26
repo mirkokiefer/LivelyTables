@@ -73,7 +73,6 @@
 -record(coloumn_exists, {coloumns}).
 
 % Database records
--define(DB_TABLES, [db_rows, db_rows2table, db_table_includes]).
 -record(db_rows, {uri, label, coloumns=[]}).
 -record(db_rows2table, {row, table}).
 -record(db_table_includes, {table, included_table}).

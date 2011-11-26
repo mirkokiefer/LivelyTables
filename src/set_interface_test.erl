@@ -1,4 +1,4 @@
--module(set_interface_test).
+-module(set_interface_test, [StoreInterface]).
 -export([run/0]).
 
 run() ->
@@ -8,12 +8,13 @@ run() ->
 
 store_sample() ->
   Set = test_data:sample_set(),
-  {atomic, {ok, success}} = t(fun() -> store_interface:write_row(Set) end).
+  {atomic, {ok, success}} = t(fun() -> StoreInterface:write_row(Set) end).
 
 test_set2record() ->
   SampleSet = test_data:sample_set(),
   RecordSet = test_data:record_set(),
-  RecordSet = set_utils:set2records(SampleSet).
+  SetUtils = set_utils:new(StoreInterface),
+  RecordSet = SetUtils:set2records(SampleSet).
 
 t(Fun) ->
-  store_interface:transaction(Fun).
+  StoreInterface:transaction(Fun).

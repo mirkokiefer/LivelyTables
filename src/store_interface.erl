@@ -6,7 +6,7 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(store_interface).
+-module(store_interface, [Store]).
 
 -export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1,
   read_row/1, read_row/2, read_table/1, read_coloumn/1,
@@ -16,34 +16,34 @@
 
 -include("../include/records.hrl").
 
-transaction(Fun) -> store:transaction(Fun).
+transaction(Fun) -> Store:transaction(Fun).
 
 read_row(Row=#row{}) -> Row;
 
-read_row(RowURI) -> store:read_row(RowURI).
+read_row(RowURI) -> Store:read_row(RowURI).
 
 read_row(RowURI, TableURI) ->
-  Row = #row{coloumns=Coloumns} = store:read_row(RowURI),
+  Row = #row{coloumns=Coloumns} = Store:read_row(RowURI),
   LegalColoumns = read_coloumns_of_table(TableURI),
   MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
   FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
   Row#row{coloumns=lists:sort(FilteredColoumns)}.
 
-read_table(TableURI) -> store:read_table(TableURI).
+read_table(TableURI) -> Store:read_table(TableURI).
 
-read_coloumn(ColoumnURI) -> store:read_coloumn(ColoumnURI).
+read_coloumn(ColoumnURI) -> Store:read_coloumn(ColoumnURI).
 
-read_rows_of_table(TableURI) -> store:read_rows_of_table(TableURI).
+read_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
 
-read_tables_including(TableURI) -> store:read_tables_including(TableURI).
+read_tables_including(TableURI) -> Store:read_tables_including(TableURI).
 
-read_tables_including_directly(TableURI) -> store:read_tables_including_directly(TableURI).
+read_tables_including_directly(TableURI) -> Store:read_tables_including_directly(TableURI).
 
-read_subtables(TableURI) -> store:read_subtables(TableURI).
+read_subtables(TableURI) -> Store:read_subtables(TableURI).
 
-read_tables_of_row(RowURI) -> store:read_tables_of_row(RowURI).
+read_tables_of_row(RowURI) -> Store:read_tables_of_row(RowURI).
 
-read_coloumns_of_table(TableURI) -> lists:sort(store:read_coloumns_of_table(TableURI)).
+read_coloumns_of_table(TableURI) -> lists:sort(Store:read_coloumns_of_table(TableURI)).
 
 write_row(Row) -> write_row(Row, ?ROW).
 
@@ -54,12 +54,12 @@ write_table(Table=#table{}) -> write(utils:table2row(Table), ?TABLE).
 write_coloumn(Coloumn=#coloumn{}) -> write(utils:coloumn2row(Coloumn), ?COLOUMN).
 
 write(Row=#row{uri=URI}, Table) ->
-  OldRow = store:read_row(URI),
+  OldRow = Store:read_row(URI),
   MergedRow = merge(Row, OldRow, Table),
   case validate(MergedRow) of
     {true, _} -> case URI of
       undefined -> {false, legal_coloumn_missing(<<"uri">>)};
-      _ -> store:write_all([MergedRow])
+      _ -> Store:write_all([MergedRow])
     end;
     {false, Errors} -> {error, Errors}
   end.
@@ -86,7 +86,7 @@ merge_rows(NewRow, OldRow, NewTable) ->
       false -> [NewTable|NewTables]
     end
   end,
-  #table{legal_coloumns=LegalColoumns} = store:read_table(NewTable),
+  #table{legal_coloumns=LegalColoumns} = Store:read_table(NewTable),
   MergedColoumns = merge_coloumns(OldColoumns, NewColoumns, LegalColoumns),
   NewRow#row{label=MergedLabel, tables=MergedTables, coloumns=MergedColoumns}.
 
@@ -124,7 +124,7 @@ validate_legal_coloumn(LegalColoumn, #row{coloumns=Coloumns}) ->
   ColoumnURIs = [ColoumnURI || {ColoumnURI, _} <- Coloumns],
   case lists:member(LegalColoumn, ColoumnURIs) of
     true -> {true, []};
-    false -> case store:read_coloumn(LegalColoumn) of
+    false -> case Store:read_coloumn(LegalColoumn) of
       #coloumn{optional=false} -> {false, legal_coloumn_missing(LegalColoumn)};
       #coloumn{optional=true} -> {true, []}
     end
@@ -141,7 +141,7 @@ validate_coloumns(Row=#row{tables=Tables, coloumns=Coloumns}) ->
 validate_coloumn_values(Coloumns, Row) -> validate_coloumn_values(Coloumns, Row, {true, []}).
 
 validate_coloumn_values([{ColoumnURI, Value}|Rest], Row, {Valid, Errors}) ->
-  {ValidColoumn, ColoumnErrors} = case store:read_coloumn(ColoumnURI) of
+  {ValidColoumn, ColoumnErrors} = case Store:read_coloumn(ColoumnURI) of
     undefined -> {false, coloumn_not_exists(ColoumnURI, Value)};
     #coloumn{range=Range, arity=Arity, optional=Optional} -> 
       Result = validate_coloumn_range(Range, Arity, Optional, Value, Row),
@@ -175,12 +175,12 @@ validate_coloumn_range(Range, ?ARITY_ONE, Optional, Value=#coloumn{}, Row) ->
 validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{tables=Tables}, _Row) ->
   case validate_row(Value) of
     {true, _} ->
-      Parents = Tables ++ lists:flatten([store:read_subtables(Table) || Table <- Tables]),
+      Parents = Tables ++ lists:flatten([Store:read_subtables(Table) || Table <- Tables]),
       {lists:member(Range, Parents), []};
     {false, Errors} -> {false, Errors}
   end;
 validate_coloumn_range(Range, ?ARITY_ONE, _, Value, _Row) ->
-  {lists:member(Range, store:read_tables_of_row(Value)), []}.
+  {lists:member(Range, Store:read_tables_of_row(Value)), []}.
 
 missing_coloumns(?ROW, _, _) -> [];
 missing_coloumns(?TABLE, _, _) -> [];

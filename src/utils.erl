@@ -9,7 +9,7 @@
 -module(utils).
 -export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
-  row_coloumn/2, tables_with_legal_coloumns/1,
+  row_coloumn/2, tables_with_legal_coloumns/2,
   row2coloumnlist/1, coloumnlist2row/1,
   row2table/1, table2row/1, row2coloumn/1, coloumn2row/1,
   json/1, json2row/1, json2table/1, json2coloumn/1]).
@@ -59,14 +59,15 @@ row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
     {_, Value} -> Value
   end.
 
-tables_with_legal_coloumns(ValidLegalColoumns) -> tables_with_legal_props(?ROW, ValidLegalColoumns).
+tables_with_legal_coloumns(ValidLegalColoumns, StoreInterface) ->
+  tables_with_legal_props(?ROW, ValidLegalColoumns, StoreInterface).
 
-tables_with_legal_props(CurrentTableURI, ValidLegalColoumns) ->
-  #table{legal_coloumns=LegalColoumns} = store_interface:read_table(CurrentTableURI),
+tables_with_legal_props(CurrentTableURI, ValidLegalColoumns, StoreInterface) ->
+  #table{legal_coloumns=LegalColoumns} = StoreInterface:read_table(CurrentTableURI),
   case utils:is_subset(ValidLegalColoumns, LegalColoumns) of
     true -> [CurrentTableURI];
-    false -> Subtables = store_interface:read_tables_including_directly(CurrentTableURI),
-      lists:flatten([tables_with_legal_props(Subtable, ValidLegalColoumns) || Subtable <- Subtables])
+    false -> Subtables = StoreInterface:read_tables_including_directly(CurrentTableURI),
+      lists:flatten([tables_with_legal_props(Subtable, ValidLegalColoumns, StoreInterface) || Subtable <- Subtables])
   end.
 
 row2coloumnlist(#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->

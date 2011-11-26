@@ -6,7 +6,7 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(set_utils).
+-module(set_utils, [StoreInterface]).
 -export([set2records/1]).
 
 -include("../include/records.hrl").
@@ -54,7 +54,7 @@ conditions2records(Conditions) ->
   [condition2record(Condition) || Condition <- Conditions].
 
 condition2record(ConditionURI) ->
-  Condition = store_interface:read_row(ConditionURI),
+  Condition = StoreInterface:read_row(ConditionURI),
   Coloumns = utils:row_coloumn(?COLOUMN_COLOUMN_SET, Condition),
   condition2record(condition_table(Condition), set2records(Coloumns), Condition).
 
@@ -67,8 +67,8 @@ condition2record(?COLOUMN_EXISTS_CONDITION, Coloumns, _Condition) ->
 
 % utility functions
 set_table(Set, _Set=#row{tables=Tables}) ->
-  TableChain = Tables ++ lists:flatten([store_interface:read_subtables(Table) || Table <- Tables]),
-  utils:filter_element(TableChain, store_interface:read_tables_including_directly(Set)).
+  TableChain = Tables ++ lists:flatten([StoreInterface:read_subtables(Table) || Table <- Tables]),
+  utils:filter_element(TableChain, StoreInterface:read_tables_including_directly(Set)).
 
 condition_table(#row{tables=Tables}) ->
-  utils:filter_element(Tables, store_interface:read_tables_including(?CONDITION)).
+  utils:filter_element(Tables, StoreInterface:read_tables_including(?CONDITION)).

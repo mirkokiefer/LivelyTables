@@ -1,26 +1,27 @@
--module(store_test).
+-module(store_test, [Store]).
 
 -export([run/0]).
 
 -include("../include/records.hrl").
 
 run() ->
-  {atomic, {ok, success}} = store:transaction(fun test_write_core/0),
-  {atomic, {ok, success}} = store:transaction(fun test_write_tables/0),
-  {atomic, {ok, success}} = store:transaction(fun test_write_composite/0),
-  {atomic, {ok, success}} = store:transaction(fun test_write_set_core/0),
+  io:format("~p~n", [Store]),
+  {atomic, {ok, success}} = Store:transaction(fun test_write_core/0),
+  {atomic, {ok, success}} = Store:transaction(fun test_write_tables/0),
+  {atomic, {ok, success}} = Store:transaction(fun test_write_composite/0),
+  {atomic, {ok, success}} = Store:transaction(fun test_write_set_core/0),
   {ok, success}.
 
 test_write_core() ->
-  {ok, success} = store:write_all(test_data:core_tables()),
-  {ok, success} = store:write_all(test_data:core_coloumns()).
+  {ok, success} = Store:write_all(test_data:core_tables()),
+  {ok, success} = Store:write_all(test_data:core_coloumns()).
 
 test_write_tables() ->
-  {ok, success} = store:write_all(test_data:tables()).
+  {ok, success} = Store:write_all(test_data:tables()).
 
 test_write_composite() ->
-  {ok, success} = store:write_all(test_data:composite_rows()).
+  {ok, success} = Store:write_all(test_data:composite_rows()).
 
 test_write_set_core() ->
-  {ok, success} = store:write_all(test_data:set_coloumns()),
-  {ok, success} = store:write_all(test_data:set_tables()).
+  {ok, success} = Store:write_all(test_data:set_coloumns()),
+  {ok, success} = Store:write_all(test_data:set_tables()).

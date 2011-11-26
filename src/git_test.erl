@@ -1,4 +1,4 @@
--module(git_test).
+-module(git_test, [StoreInterface]).
 -export([run/0]).
 
 -include("../include/records.hrl").
@@ -9,7 +9,7 @@ run() ->
 
 write_read_file() ->
   T = fun() ->
-    Jim = store_interface:read_row(<<"jim">>),
+    Jim = StoreInterface:read_row(<<"jim">>),
     git:write(Jim),
     Jim == git:read_row(<<"jim">>)
   end,
