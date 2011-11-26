@@ -54,6 +54,7 @@
 -define(COLOUMN_CONDITIONS, <<"coloumn_conditions">>).
 -define(COLOUMN_VALUE, <<"coloumn_value">>).
 
+% Core Records
 -record(row, {uri, label, tables=[], coloumns=[]}).
 -record(table, {uri, label, tables=[?TABLE], coloumns=[], parents=[?ROW], legal_coloumns=[]}).
 -record(coloumn, {uri, label, tables=[?COLOUMN], coloumns=[], range=[?ROW], arity=?ARITY_ONE,
@@ -70,3 +71,9 @@
 
 -record(value_equals, {coloumns, value}).
 -record(coloumn_exists, {coloumns}).
+
+% Database records
+-define(DB_TABLES, [db_rows, db_rows2table, db_table_includes]).
+-record(db_rows, {uri, label, coloumns=[]}).
+-record(db_rows2table, {row, table}).
+-record(db_table_includes, {table, included_table}).
