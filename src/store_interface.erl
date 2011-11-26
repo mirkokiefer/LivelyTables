@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc HTTP server
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(store_interface).
 
 -export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1,

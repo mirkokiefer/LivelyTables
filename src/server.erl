@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc HTTP server
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(server).
 
 -export([start/0, stop/0, loop/1]).

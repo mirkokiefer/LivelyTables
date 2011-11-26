@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc HTTP server
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(set_interface).
 -export([eval/1, eval_set_row/1]).
 

@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc HTTP server
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(utils).
 -export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
