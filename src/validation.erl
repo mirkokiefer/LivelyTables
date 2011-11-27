@@ -6,101 +6,15 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(store_interface, [Store]).
+-module(validation, [Store]).
 
--export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1,
-  read_row/1, read_row/2, read_table/1, read_coloumn/1,
-  read_rows_of_table/1, read_child_tables/1, read_direct_child_tables/1, read_parent_tables/1,
-  read_tables_of_row/1, read_coloumns_of_table/1,
-  validate/1]).
+-export([check/1]).
 
 -include("../include/records.hrl").
 
-transaction(Fun) -> Store:transaction(Fun).
-
-read_row(Row=#row{}) -> Row;
-
-read_row(RowURI) -> Store:read_row(RowURI).
-
-read_row(RowURI, TableURI) ->
-  Row = #row{coloumns=Coloumns} = Store:read_row(RowURI),
-  LegalColoumns = read_coloumns_of_table(TableURI),
-  MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
-  FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
-  Row#row{coloumns=lists:sort(FilteredColoumns)}.
-
-read_table(TableURI) -> Store:read_table(TableURI).
-
-read_coloumn(ColoumnURI) -> Store:read_coloumn(ColoumnURI).
-
-read_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
-
-read_child_tables(TableURI) -> Store:read_child_tables(TableURI).
-
-read_direct_child_tables(TableURI) -> Store:read_direct_child_tables(TableURI).
-
-read_parent_tables(TableURI) -> Store:read_parent_tables(TableURI).
-
-read_tables_of_row(RowURI) -> Store:read_tables_of_row(RowURI).
-
-read_coloumns_of_table(TableURI) -> lists:sort(Store:read_coloumns_of_table(TableURI)).
-
-write_row(Row) -> write_row(Row, ?ROW).
-
-write_row(Row=#row{}, Table) -> write(Row, Table).
-
-write_table(Table=#table{}) -> write(utils:table2row(Table), ?TABLE).
-
-write_coloumn(Coloumn=#coloumn{}) -> write(utils:coloumn2row(Coloumn), ?COLOUMN).
-
-write(Row=#row{uri=URI}, Table) ->
-  OldRow = Store:read_row(URI),
-  MergedRow = merge(Row, OldRow, Table),
-  case validate(MergedRow) of
-    {true, _} -> case URI of
-      undefined -> {false, legal_coloumn_missing(<<"uri">>)};
-      _ -> Store:write_all([MergedRow])
-    end;
-    {false, Errors} -> {error, Errors}
-  end.
-
-merge(Row=#row{tables=Tables}, undefined, TableURI) ->
-  case lists:member(TableURI, Tables) of
-      true -> Row;
-      false -> Row#row{tables=[TableURI|Tables]}
-  end;
-
-merge(Row, OldRow, TableURI) -> merge_rows(Row, OldRow, TableURI).
-
-merge_rows(NewRow, OldRow, NewTable) ->
-  #row{label=OldLabel, tables=OldTables, coloumns=OldColoumns} = OldRow,
-  #row{label=NewLabel, tables=NewTables, coloumns=NewColoumns} = NewRow,
-  MergedLabel = case NewLabel of
-    undefined -> OldLabel;
-    _ -> NewLabel
-  end,
-  MergedTables = case NewTables of
-    [] -> [NewTable|OldTables];
-    _Any -> case lists:member(NewTable, NewTables) of
-      true -> NewTables;
-      false -> [NewTable|NewTables]
-    end
-  end,
-  #table{legal_coloumns=LegalColoumns} = Store:read_table(NewTable),
-  MergedColoumns = merge_coloumns(OldColoumns, NewColoumns, LegalColoumns),
-  NewRow#row{label=MergedLabel, tables=MergedTables, coloumns=MergedColoumns}.
-
-merge_coloumns(OldColoumns, NewColoumns, LegalColoumns) ->
-  NewColoumnURIs = [URI || {URI, _} <- NewColoumns],
-  LeftOutColoumns = [Prop || Prop={URI,_} <- OldColoumns,
-    lists:member(URI, NewColoumnURIs) == false,
-    lists:member(URI, LegalColoumns) == false
-  ],
-  LeftOutColoumns ++ NewColoumns.
-
-validate(Table = #table{}) -> validate_row(utils:table2row(Table));
-validate(Coloumn = #coloumn{}) -> validate_row(utils:coloumn2row(Coloumn));
-validate(Row = #row{}) -> validate_row(Row).
+check(Table = #table{}) -> validate_row(utils:table2row(Table));
+check(Coloumn = #coloumn{}) -> validate_row(utils:coloumn2row(Coloumn));
+check(Row = #row{}) -> validate_row(Row).
 
 validate_row(Row) ->
   {ValidTable, TableErrors} = validate_table_requirements(Row),
@@ -108,7 +22,7 @@ validate_row(Row) ->
   {ValidTable and ValidColoumns, TableErrors++ColoumnErrors}.
 
 validate_table_requirements(Row=#row{tables=Tables}) ->
-  LegalCols = lists:flatten([read_coloumns_of_table(Table) || Table <- Tables]),
+  LegalCols = lists:flatten([Store:read_coloumns_of_table(Table) || Table <- Tables]),
   Results = [validate_legal_coloumns(LegalColoumns, Row) || #table{legal_coloumns=LegalColoumns} <- LegalCols],
   sum_result(Results).
 
@@ -181,15 +95,6 @@ validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{tables=Tables}, _Row) ->
   end;
 validate_coloumn_range(Range, ?ARITY_ONE, _, Value, _Row) ->
   {lists:member(Range, Store:read_tables_of_row(Value)), []}.
-
-missing_coloumns(?ROW, _, _) -> [];
-missing_coloumns(?TABLE, _, _) -> [];
-missing_coloumns(_URI, ColoumnValues, LegalColoumns) ->
-  Coloumns = coloumnvalues2columns(ColoumnValues),
-  MissingColoumns = (LegalColoumns -- Coloumns) -- [?COLOUMN_LABEL, ?COLOUMN_TABLES],
-  [{Coloumn, undefined} || Coloumn <- MissingColoumns].
-
-coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues].
 
 %Merges Error results
 sum_result(Result) -> sum_result(Result, {true, []}).

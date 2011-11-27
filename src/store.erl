@@ -8,7 +8,8 @@
 
 -module(store, [Store]).
 -export([start/0, stop/0, reset/0, clear/0]).
--export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
+-export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1, write/2, write_all/1]).
+-export([read_row/2, read_row/1, read_table/1, read_coloumn/1,
   read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
   read_parent_tables/1, read_direct_parent_tables/1, read_coloumns_of_table/1,
   read_child_tables/1, read_direct_child_tables/1]).
@@ -31,6 +32,25 @@ write_all(Records) ->
   [write(Record) || Record <- Records],
   {ok, success}.
 
+% write with validation
+write_row(Row) -> write_row(Row, ?ROW).
+ 
+write_row(Row=#row{}, Table) -> write(Row, Table).
+ 
+write_table(Table=#table{}) -> write(utils:table2row(Table), ?TABLE).
+ 
+write_coloumn(Coloumn=#coloumn{}) -> write(utils:coloumn2row(Coloumn), ?COLOUMN).
+
+write(Row=#row{uri=URI}, Table) ->
+  OldRow = read_row(URI),
+  MergedRow = merge(Row, OldRow, Table),
+  Validation = validation:new(?MODULE:new(Store)),
+  case Validation:check(MergedRow) of
+    {true, _} -> write_all([MergedRow]);
+    {false, Errors} -> {error, Errors}
+  end.
+
+% write without validation
 write(Row=#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
   ResolvedRow = Row#row{tables=resolve(utils:set(Tables)), coloumns=resolve_coloumns(Coloumns)},
   #row{tables=ResolvedTables, coloumns=ResolvedColoumns} = ResolvedRow,
@@ -78,6 +98,17 @@ resolve(URI) -> URI.
 resolve_coloumns([{Coloumn, Value}|Rest]) ->
   [{Coloumn, resolve(Value)}|resolve_coloumns(Rest)];
 resolve_coloumns([]) -> [].
+
+% read with row integrity checking
+read_row(RowURI, TableURI) ->
+  Row = #row{coloumns=Coloumns} = read_row(RowURI),
+  LegalColoumns = read_coloumns_of_table(TableURI),
+  MissingCols = missing_coloumns(RowURI, Coloumns, LegalColoumns),
+  FilteredColoumns = [Coloumn || Coloumn={URI,_} <- Coloumns++MissingCols, lists:member(URI, LegalColoumns)],
+  Row#row{coloumns=lists:sort(FilteredColoumns)}.
+
+% read raw row data
+read_row(Row=#row{}) -> Row;
 
 read_row(URI) ->
   case Store:read_rows(URI) of
@@ -132,3 +163,47 @@ read_direct_child_tables(TableURI) -> Store:read_child_tables(TableURI).
 read_coloumns_of_table(TableURI) ->
   TableChain = [read_table(URI) || URI <- [TableURI | read_parent_tables(TableURI)]],
   lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain]).
+
+%utility functions
+merge(Row=#row{tables=Tables}, undefined, TableURI) ->
+  case lists:member(TableURI, Tables) of
+      true -> Row;
+      false -> Row#row{tables=[TableURI|Tables]}
+  end;
+
+merge(Row, OldRow, TableURI) -> merge_rows(Row, OldRow, TableURI).
+
+merge_rows(NewRow, OldRow, NewTable) ->
+  #row{label=OldLabel, tables=OldTables, coloumns=OldColoumns} = OldRow,
+  #row{label=NewLabel, tables=NewTables, coloumns=NewColoumns} = NewRow,
+  MergedLabel = case NewLabel of
+    undefined -> OldLabel;
+    _ -> NewLabel
+  end,
+  MergedTables = case NewTables of
+    [] -> [NewTable|OldTables];
+    _Any -> case lists:member(NewTable, NewTables) of
+      true -> NewTables;
+      false -> [NewTable|NewTables]
+    end
+  end,
+  #table{legal_coloumns=LegalColoumns} = read_table(NewTable),
+  MergedColoumns = merge_coloumns(OldColoumns, NewColoumns, LegalColoumns),
+  NewRow#row{label=MergedLabel, tables=MergedTables, coloumns=MergedColoumns}.
+
+merge_coloumns(OldColoumns, NewColoumns, LegalColoumns) ->
+  NewColoumnURIs = [URI || {URI, _} <- NewColoumns],
+  LeftOutColoumns = [Prop || Prop={URI,_} <- OldColoumns,
+    lists:member(URI, NewColoumnURIs) == false,
+    lists:member(URI, LegalColoumns) == false
+  ],
+  LeftOutColoumns ++ NewColoumns.
+
+missing_coloumns(?ROW, _, _) -> [];
+missing_coloumns(?TABLE, _, _) -> [];
+missing_coloumns(_URI, ColoumnValues, LegalColoumns) ->
+  Coloumns = coloumnvalues2columns(ColoumnValues),
+  MissingColoumns = (LegalColoumns -- Coloumns) -- [?COLOUMN_LABEL, ?COLOUMN_TABLES],
+  [{Coloumn, undefined} || Coloumn <- MissingColoumns].
+
+coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues].

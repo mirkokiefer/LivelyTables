@@ -22,14 +22,11 @@ test_store() ->
   PluggableStore = pluggable_store:new(rows_test, rows2table_test, table_includes_test),
   store:new(PluggableStore).
 
-test_store_interface(Store) -> store_interface:new(Store).
-
 tests(Store) ->
-  StoreInterface = test_store_interface(Store),
   StoreTest = store_test:new(Store),
-  StoreInterfaceTest = store_interface_test:new(StoreInterface),
-  SetInterfaceTest = set_interface_test:new(StoreInterface),
-  GitTest = git_test:new(StoreInterface),
+  StoreInterfaceTest = store_interface_test:new(Store),
+  SetInterfaceTest = set_interface_test:new(Store),
+  GitTest = git_test:new(Store),
   {ok, success} = StoreTest:run(),
   {ok, success} = StoreInterfaceTest:run(),
   {ok, success} = SetInterfaceTest:run(),

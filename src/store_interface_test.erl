@@ -1,4 +1,4 @@
--module(store_interface_test, [StoreInterface]).
+-module(store_interface_test, [Store]).
 -export([run/0]).
 
 -include("../include/records.hrl").
@@ -23,31 +23,32 @@ test_validate_sets() ->
   {ok, success} = test_validate(test_data:set_tables()).
 
 test_validate(Rows) ->
-  Result = [StoreInterface:validate(Each) || Each <- Rows],
+  Validation = validation:new(Store),
+  Result = [Validation:check(Each) || Each <- Rows],
   check_each_valid(Result).
 
 test_write_coloumns() ->
-  Result = [StoreInterface:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],
+  Result = [Store:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],
   check_each_result(Result).
 
 test_write_invalid_rows() ->
-  Result = [StoreInterface:write_row(Row) || Row <- test_data:invalid_rows()],
+  Result = [Store:write_row(Row) || Row <- test_data:invalid_rows()],
   check_each_invalid_result(Result).
 
 test_write_valid_rows() ->
-  Result = [StoreInterface:write_row(Row) || Row <- test_data:rows()],
+  Result = [Store:write_row(Row) || Row <- test_data:rows()],
   check_each_result(Result).
 
 test_update_valid_rows() ->
-  Result = [StoreInterface:write_row(Row) || Row <- test_data:rows_updated()],
+  Result = [Store:write_row(Row) || Row <- test_data:rows_updated()],
   check_each_result(Result).
 
 test_update_invalid_rows() ->
-  Result = [StoreInterface:write_row(Row) || Row <- test_data:invalid_rows_updated()],
+  Result = [Store:write_row(Row) || Row <- test_data:invalid_rows_updated()],
   check_each_invalid_result(Result).
 
 test_composite_rows() ->
-  Result = [StoreInterface:write_row(Row) || Row <- test_data:composite_rows2()],
+  Result = [Store:write_row(Row) || Row <- test_data:composite_rows2()],
   check_each_result(Result).
 
 check_each_result(Result) ->
@@ -75,4 +76,4 @@ check_each_invalid_result(Result) ->
   end.
 
 t(Fun) ->
-  StoreInterface:transaction(Fun).
+  Store:transaction(Fun).
