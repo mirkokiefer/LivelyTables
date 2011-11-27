@@ -10,8 +10,8 @@
 -export([start/0, stop/0, reset/0, clear/0]).
 -export([transaction/1, write_all/1, read_row/1, read_table/1, read_coloumn/1,
   read_rows_of_table/1, read_tables_of_row/1, read_direct_tables_of_row/1,
-  read_subtables/1, read_direct_subtables/1, read_coloumns_of_table/1,
-  read_tables_including/1, read_tables_including_directly/1]).
+  read_parent_tables/1, read_direct_parent_tables/1, read_coloumns_of_table/1,
+  read_child_tables/1, read_direct_child_tables/1]).
 
 -include("../include/records.hrl").
 
@@ -90,7 +90,7 @@ read_row(URI) ->
 % Table "Row" doesn't have included_tables so we need to implement it explicitly
 read_table(?ROW) -> utils:row2table(read_row(?ROW));
 read_table(URI) ->
-  case {read_row(URI), read_direct_subtables(URI)} of
+  case {read_row(URI), read_direct_parent_tables(URI)} of
     {undefined, _} -> undefined;
     {_Row, []} -> undefined;
     {Row, _Parents} -> utils:row2table(Row)
@@ -109,26 +109,26 @@ read_tables_of_row(RowURI) -> utils:set(read_tables_of_row_internal(RowURI)).
 
 read_tables_of_row_internal(RowURI) ->
   Tables = read_direct_tables_of_row(RowURI),
-  Tables ++ lists:flatten([read_subtables(Table) || Table <- Tables]).
+  Tables ++ lists:flatten([read_parent_tables(Table) || Table <- Tables]).
 
 read_rows_of_table(TableURI) ->
-  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_tables_including(TableURI)]]).
+  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_child_tables(TableURI)]]).
 
 read_direct_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
 
-read_subtables(TableURI) ->
-  DirectParents = read_direct_subtables(TableURI),
-  DirectParents ++ lists:flatten([read_subtables(Parent) || Parent <- DirectParents]).
+read_parent_tables(TableURI) ->
+  DirectParents = read_direct_parent_tables(TableURI),
+  DirectParents ++ lists:flatten([read_parent_tables(Parent) || Parent <- DirectParents]).
 
-read_direct_subtables(TableURI) ->
-  [Parent || #db_table_includes{included_table=Parent} <- Store:read_subtables(TableURI)].
+read_direct_parent_tables(TableURI) ->
+  [Parent || #db_table_includes{included_table=Parent} <- Store:read_parent_tables(TableURI)].
 
-read_tables_including(TableURI) ->
-  DirectSubtables = read_tables_including_directly(TableURI),
-  DirectSubtables ++ lists:flatten([read_tables_including(Each) || Each <- DirectSubtables]).
+read_child_tables(TableURI) ->
+  DirectSubtables = read_direct_child_tables(TableURI),
+  DirectSubtables ++ lists:flatten([read_child_tables(Each) || Each <- DirectSubtables]).
 
-read_tables_including_directly(TableURI) -> Store:read_tables_including(TableURI).
+read_direct_child_tables(TableURI) -> Store:read_child_tables(TableURI).
 
 read_coloumns_of_table(TableURI) ->
-  TableChain = [read_table(URI) || URI <- [TableURI | read_subtables(TableURI)]],
+  TableChain = [read_table(URI) || URI <- [TableURI | read_parent_tables(TableURI)]],
   lists:flatten([LegalColoumns || #table{legal_coloumns=LegalColoumns} <- TableChain]).

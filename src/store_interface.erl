@@ -10,7 +10,7 @@
 
 -export([transaction/1, write_row/1, write_row/2, write_table/1, write_coloumn/1,
   read_row/1, read_row/2, read_table/1, read_coloumn/1,
-  read_rows_of_table/1, read_tables_including/1, read_tables_including_directly/1, read_subtables/1,
+  read_rows_of_table/1, read_child_tables/1, read_direct_child_tables/1, read_parent_tables/1,
   read_tables_of_row/1, read_coloumns_of_table/1,
   validate/1]).
 
@@ -35,11 +35,11 @@ read_coloumn(ColoumnURI) -> Store:read_coloumn(ColoumnURI).
 
 read_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
 
-read_tables_including(TableURI) -> Store:read_tables_including(TableURI).
+read_child_tables(TableURI) -> Store:read_child_tables(TableURI).
 
-read_tables_including_directly(TableURI) -> Store:read_tables_including_directly(TableURI).
+read_direct_child_tables(TableURI) -> Store:read_direct_child_tables(TableURI).
 
-read_subtables(TableURI) -> Store:read_subtables(TableURI).
+read_parent_tables(TableURI) -> Store:read_parent_tables(TableURI).
 
 read_tables_of_row(RowURI) -> Store:read_tables_of_row(RowURI).
 
@@ -175,7 +175,7 @@ validate_coloumn_range(Range, ?ARITY_ONE, Optional, Value=#coloumn{}, Row) ->
 validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{tables=Tables}, _Row) ->
   case validate_row(Value) of
     {true, _} ->
-      Parents = Tables ++ lists:flatten([Store:read_subtables(Table) || Table <- Tables]),
+      Parents = Tables ++ lists:flatten([Store:read_parent_tables(Table) || Table <- Tables]),
       {lists:member(Range, Parents), []};
     {false, Errors} -> {false, Errors}
   end;

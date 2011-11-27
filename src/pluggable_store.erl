@@ -9,7 +9,7 @@
 -module(pluggable_store, [DBRows, DBRows2Table, DBTableIncludes]).
 
 -export([start/0, stop/0, reset/0, clear/0]).
--export([transaction/1, write/1, read_rows/1, read_rows_of_table/1, read_tables_of_row/1, read_subtables/1, read_tables_including/1]).
+-export([transaction/1, write/1, read_rows/1, read_rows_of_table/1, read_tables_of_row/1, read_parent_tables/1, read_child_tables/1]).
 
 -define(DB_TABLES, [DBRows, DBRows2Table, DBTableIncludes]).
 
@@ -83,14 +83,14 @@ read_rows(ID) -> read(DBRows, ID).
 
 read_tables_of_row(RowID) -> read(DBRows2Table, RowID).
 
-read_subtables(TableID) -> read(DBTableIncludes, TableID).
+read_parent_tables(TableID) -> read(DBTableIncludes, TableID).
 
 read_rows_of_table(TableURI) ->
   F = fun() -> mnesia:index_read(DBRows2Table, TableURI, #db_rows2table.table) end,
   {atomic, Records} = mnesia:transaction(F),
   [Row || #db_rows2table{row=Row} <- Records].
   
-read_tables_including(TableURI) ->
+read_child_tables(TableURI) ->
   F = fun() -> mnesia:index_read(DBTableIncludes, TableURI, #db_table_includes.included_table) end,
   {atomic, Records} = mnesia:transaction(F),
   [Subtable || #db_table_includes{table=Subtable} <- Records].

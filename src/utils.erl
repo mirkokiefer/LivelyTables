@@ -66,7 +66,7 @@ tables_with_legal_props(CurrentTableURI, ValidLegalColoumns, StoreInterface) ->
   #table{legal_coloumns=LegalColoumns} = StoreInterface:read_table(CurrentTableURI),
   case utils:is_subset(ValidLegalColoumns, LegalColoumns) of
     true -> [CurrentTableURI];
-    false -> Subtables = StoreInterface:read_tables_including_directly(CurrentTableURI),
+    false -> Subtables = StoreInterface:read_direct_child_tables(CurrentTableURI),
       lists:flatten([tables_with_legal_props(Subtable, ValidLegalColoumns, StoreInterface) || Subtable <- Subtables])
   end.
 

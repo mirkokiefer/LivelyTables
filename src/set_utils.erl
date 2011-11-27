@@ -67,8 +67,8 @@ condition2record(?COLOUMN_EXISTS_CONDITION, Coloumns, _Condition) ->
 
 % utility functions
 set_table(Set, _Set=#row{tables=Tables}) ->
-  TableChain = Tables ++ lists:flatten([StoreInterface:read_subtables(Table) || Table <- Tables]),
-  utils:filter_element(TableChain, StoreInterface:read_tables_including_directly(Set)).
+  TableChain = Tables ++ lists:flatten([StoreInterface:read_parent_tables(Table) || Table <- Tables]),
+  utils:filter_element(TableChain, StoreInterface:read_direct_child_tables(Set)).
 
 condition_table(#row{tables=Tables}) ->
-  utils:filter_element(Tables, StoreInterface:read_tables_including(?CONDITION)).
+  utils:filter_element(Tables, StoreInterface:read_child_tables(?CONDITION)).

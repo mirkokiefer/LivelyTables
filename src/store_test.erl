@@ -5,7 +5,6 @@
 -include("../include/records.hrl").
 
 run() ->
-  io:format("~p~n", [Store]),
   {atomic, {ok, success}} = Store:transaction(fun test_write_core/0),
   {atomic, {ok, success}} = Store:transaction(fun test_write_tables/0),
   {atomic, {ok, success}} = Store:transaction(fun test_write_composite/0),
