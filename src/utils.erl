@@ -8,8 +8,9 @@
 
 -module(utils).
 -export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
+  uri2record/1, record2uri/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
-  row_coloumn/2, tables_with_legal_coloumns/2,
+  row_uri2table_uri/1, row_coloumn/2,
   row2coloumnlist/1, coloumnlist2row/1,
   row2table/1, table2row/1, row2coloumn/1, coloumn2row/1,
   json/1, json2row/1, json2table/1, json2coloumn/1]).
@@ -34,6 +35,14 @@ log(Message) -> io:format("~p~n", [Message]).
 encode(String) ->
   unicode:characters_to_binary(io_lib:format("~ts", [String])).
 
+uri2record(URIString) ->
+  [Domain, DB, Table, Row] = [list_to_binary(Each) || Each <- string:tokens(URIString, "/")],
+  #row_uri{domain=Domain, db=DB, table=Table, row=Row}.
+
+record2uri(#row_uri{domain=Domain, db=DB, table=Table, row=Row}) ->
+  URIComponents = [binary_to_list(Each) || Each <- [Domain, DB, Table, Row]],
+  string:join(URIComponents, "/").
+
 set(List) ->
   sets:to_list(sets:from_list(List)).
 
@@ -53,33 +62,25 @@ is_disjoint(List1, List2) ->
 is_subset(Subset, List) ->
   sets:is_subset(sets:from_list(Subset), sets:from_list(List)).
 
+row_uri2table_uri(#row_uri{domain=Domain, db=DB, table=Table}) ->
+  #row_uri{domain=Domain, db=DB, table=?TABLE, row=Table}.
+
 row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
   case lists:keyfind(PropURI, 1, Coloumns) of
     false -> undefined;
     {_, Value} -> Value
   end.
 
-tables_with_legal_coloumns(ValidLegalColoumns, StoreInterface) ->
-  tables_with_legal_props(?ROW, ValidLegalColoumns, StoreInterface).
-
-tables_with_legal_props(CurrentTableURI, ValidLegalColoumns, StoreInterface) ->
-  #table{legal_coloumns=LegalColoumns} = StoreInterface:read_table(CurrentTableURI),
-  case utils:is_subset(ValidLegalColoumns, LegalColoumns) of
-    true -> [CurrentTableURI];
-    false -> Subtables = StoreInterface:read_direct_child_tables(CurrentTableURI),
-      lists:flatten([tables_with_legal_props(Subtable, ValidLegalColoumns, StoreInterface) || Subtable <- Subtables])
-  end.
-
-row2coloumnlist(#row{uri=URI, label=Label, tables=Tables, coloumns=Coloumns}) ->
+row2coloumnlist(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
   [
     {?URI, URI},
-    {?COLOUMN_LABEL, Label},
-    {?COLOUMN_TABLES, Tables}
+    {?COLOUMN_LABEL, Label}
   ] ++ Coloumns.
 
-coloumnlist2row([{_, URI}, {_, Label}, {_, Tables}|Rest]) ->
-  #row{uri=URI, label=Label, tables=Tables, coloumns=Rest}.
+coloumnlist2row([{_, URI}, {_, Label}|Rest]) ->
+  #row{uri=URI, label=Label, coloumns=Rest}.
 
+row2table(undefined) -> undefined;
 
 row2table(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
   row2table(Coloumns, #table{uri=URI, label=Label}).
@@ -93,11 +94,15 @@ row2table([{ColoumnURI, Value}|Rest], Table=#table{coloumns=Coloumns}) ->
   row2table(Rest, NewTable);
 row2table([], Table) -> Table.
 
+table2row(undefined) -> undefined;
+
 table2row(Table) ->
-  #row{uri=Table#table.uri, label=Table#table.label, tables=Table#table.tables, coloumns=[
+  #row{uri=Table#table.uri, label=Table#table.label, coloumns=[
     {?COLOUMN_PARENTS, Table#table.parents},
     {?COLOUMN_LEGALCOLOUMNS, Table#table.legal_coloumns}
   ] ++ Table#table.coloumns}.
+
+row2coloumn(undefined) -> undefined;
 
 row2coloumn(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
   row2coloumn(Coloumns, #coloumn{uri=URI, label=Label}).
@@ -113,8 +118,10 @@ row2coloumn([{ColoumnURI, Value}|Rest], Coloumn=#coloumn{coloumns=Coloumns}) ->
   row2coloumn(Rest, NewColoumn);
 row2coloumn([], Coloumn) -> Coloumn.
 
+coloumn2row(undefined) -> undefined;
+
 coloumn2row(Coloumn) ->
-  Row=#row{uri=Coloumn#coloumn.uri, label=Coloumn#coloumn.label, tables=Coloumn#coloumn.tables,
+  Row=#row{uri=Coloumn#coloumn.uri, label=Coloumn#coloumn.label,
     coloumns=[
       {?COLOUMN_RANGE, Coloumn#coloumn.range},
       {?COLOUMN_ARITY, Coloumn#coloumn.arity},
@@ -137,8 +144,7 @@ struct(Row=#row{uri=URI, coloumns=Coloumns}) ->
     _ -> [{?URI, URI}]
   end,
   {struct, URIColoumns ++ [
-    {?COLOUMN_LABEL, Row#row.label},
-    {?COLOUMN_TABLES, Row#row.tables}
+    {?COLOUMN_LABEL, Row#row.label}
   ] ++ [{Coloumn, struct(Value)} || {Coloumn, Value} <- Coloumns]};
 
 struct(Table=#table{}) -> struct(table2row(Table));
@@ -158,9 +164,8 @@ json2coloumn({struct, Elements}) ->
 
 parse_row_elements([{Key, Value}|Rest], Row=#row{coloumns=Coloumns}) ->
   NewRow = case Key of
-    <<"uri">> -> Row#row{uri=Value};
-    <<"label">> -> Row#row{label=Value};
-    <<"tables">> -> Row#row{tables=Value};
+    ?URI -> Row#row{uri=Value};
+    ?COLOUMN_LABEL -> Row#row{label=Value};
     _ -> Row#row{coloumns=[{Key, parse_coloumn_value(Value)}|Coloumns]}
   end,
   parse_row_elements(Rest, NewRow);

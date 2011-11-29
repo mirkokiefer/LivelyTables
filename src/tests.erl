@@ -18,19 +18,14 @@ start_trace() -> fprof:trace(start, "sapiento.trace").
 
 stop_trace() -> fprof:trace(stop).
 
-test_store() ->
-  PluggableStore = pluggable_store:new(rows_test, rows2table_test, table_includes_test),
-  store:new(PluggableStore).
+test_store() -> local_stores:get(<<"test">>).
 
 tests(Store) ->
   StoreTest = store_test:new(Store),
-  StoreInterfaceTest = store_interface_test:new(Store),
-  SetInterfaceTest = set_interface_test:new(Store),
-  GitTest = git_test:new(Store),
-  {ok, success} = StoreTest:run(),
-  {ok, success} = StoreInterfaceTest:run(),
-  {ok, success} = SetInterfaceTest:run(),
-  {ok, success} = GitTest:run().
+  {ok, success} = StoreTest:run()
+  %{ok, success} = global_interface_test:run()
+  %{ok, success} = git_test:run()
+  .
 
 analyse() ->
   fprof:profile(file, "sapiento.trace"),

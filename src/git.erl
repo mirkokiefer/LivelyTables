@@ -57,4 +57,4 @@ git(Command) ->
   "git --git-dir=" ++ ?GIT_STORE_PATH ++ ".git --work-tree=" ++ ?GIT_STORE_PATH ++ " " ++ Command.
 
 
-row_path(URI) -> ?GIT_STORE_PATH ++ bitstring_to_list(URI) ++ ".txt".
+row_path(#row_uri{row=Row}) -> ?GIT_STORE_PATH ++ binary_to_list(Row) ++ ".txt".
