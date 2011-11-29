@@ -26,13 +26,6 @@
 -define(COLOUMN_INVERSE, <<"inverse">>).
 
 
-% Set Properties
--define(COLOUMN_ROWS, <<"coloumn_rows">>).
--define(COLOUMN_SET, <<"coloumn_set">>).
--define(COLOUMN_SETS, <<"coloumn_sets">>).
--define(COLOUMN_COLOUMN_SET, <<"coloumn_coloumn_set">>).
--define(COLOUMN_CONDITIONS, <<"coloumn_conditions">>).
--define(COLOUMN_VALUE, <<"coloumn_value">>).
 
 % Core Records
 -record(row, {uri, label, tables=[], coloumns=[]}).
