@@ -35,67 +35,6 @@ core_coloumns() ->
   Optional = #coloumn{uri=?COLOUMN_OPTIONAL, label= <<"Optional">>, range=?COLOUMN_TYPE_BOOLEAN},
   [Label, Tables, Parents, LegalColoumns, Range, Arity, Inverse, Optional].
 
-set_coloumns() ->
-  Sets = #coloumn{uri= ?COLOUMN_SETS, label= <<"Sets">>, range=?SET, arity=?ARITY_MANY},
-  Set = #coloumn{uri= ?COLOUMN_SET, label= <<"Set">>, range=?SET},
-  Rows = #coloumn{uri= ?COLOUMN_ROWS, label= <<"Rows">>, range=?ROW, arity=?ARITY_MANY},
-
-  ColoumnSet = #coloumn{uri= ?COLOUMN_COLOUMN_SET, label= <<"Coloumn set">>, range=?SET},
-
-  Conditions = #coloumn{uri= ?COLOUMN_CONDITIONS, label= <<"Coloumn Conditions">>,
-    range=?CONDITION, arity=?ARITY_MANY},
-  Value = #coloumn{uri= ?COLOUMN_VALUE, label= <<"Value">>, range=?ROW},
-
-  [Sets, Set, Rows, ColoumnSet, Conditions, Value].
-
-
-set_tables() ->
-  Set = #table{uri= ?SET, label= <<"Set">>, legal_coloumns=[]},
-  RowList = #table{uri= ?ROW_LIST, label= <<"Row list">>,
-    parents=[?SET], legal_coloumns=[?COLOUMN_ROWS]},
-  % a dummy row representing the project set:
-  Project = #row{uri= ?PROJECT_SET, tables=[?SET], label= <<"Project set">>},
-  [Set, RowList, Project | set_operations() ++ set_transforms() ++ set_filters()].
-
-set_operations() ->
-  SetOperation = #table{uri= ?SET_OPERATION, label= <<"Set Operation">>, parents=[?SET],
-    legal_coloumns=[?COLOUMN_SETS]},
-  Union = #table{uri= ?UNION, label= <<"Union">>, parents=[?SET_OPERATION], legal_coloumns=[]},
-  Intersection = #table{uri= ?INTERSECTION, label= <<"Intersection">>, parents=[?SET_OPERATION], legal_coloumns=[]},
-  [SetOperation, Union, Intersection].
-
-set_transforms() ->
-  SetTransform = #table{uri= ?TABLE_TRANSFORM, label= <<"Set Transform">>, parents=[?SET], legal_coloumns=[
-    ?COLOUMN_SET
-  ]},
-  Table2Cells = #table{uri= ?TABLE2CELLS, label= <<"Table -> Cells">>,
-    parents=[?TABLE_TRANSFORM], legal_coloumns=[?COLOUMN_COLOUMN_SET]},
-  Coloumns2Tables = #table{uri= ?COLOUMNS2TABLES, label= <<"Coloumns -> Tables">>,
-    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
-  Table2Coloumns = #table{uri= ?TABLE2COLOUMNS, label= <<"Table -> Coloumns">>,
-    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
-  Tables2Table = #table{uri= ?TABLES2TABLE, label= <<"Tables -> Table">>,
-    parents=[?TABLE_TRANSFORM], legal_coloumns=[]},
-
-  [SetTransform, Table2Cells, Coloumns2Tables, Table2Coloumns, Tables2Table].
-
-set_filters() ->
-  Filter = #table{uri= ?FILTER, label= <<"Filter">>, parents=[?SET], legal_coloumns=[
-    ?COLOUMN_SET,
-    ?COLOUMN_CONDITIONS
-  ]},
-
-  Condition = #table{uri= ?CONDITION, label= <<"Coloumn Condition">>, parents=[?SET], legal_coloumns=[
-    ?COLOUMN_COLOUMN_SET
-  ]},
-
-  ColoumnExists = #table{uri= ?COLOUMN_EXISTS_CONDITION, label= <<"Coloumn exists">>, parents=[?CONDITION]},
-  ValueCondition = #table{uri= ?VALUE_CONDITION, label= <<"Value condition">>, parents=[?CONDITION]},
-  Equals = #table{uri= ?VALUE_CONDITION_EQUALS, label= <<"Value equals">>, parents=[?VALUE_CONDITION],
-    legal_coloumns=[?COLOUMN_VALUE]},
-
-  [Filter, Condition, ColoumnExists, ValueCondition, Equals].
-
 tables() ->
   Person = #table{uri= <<"person">>, label= <<"Person">>, legal_coloumns=[<<"age">>]},
   Employee = #table{uri= <<"employee">>, label= <<"Employee">>, parents=[<<"person">>],
@@ -176,35 +115,3 @@ composite_rows2() ->
     ]}}
   ]},
   [Alex, Fred].
-
-sample_set() ->
-  Persons = #row{tables=[?TABLES2TABLE], coloumns=[
-    {?COLOUMN_SET, row_list([<<"employee">>])}
-  ]},
-  ColoumnExists = #row{tables=[?COLOUMN_EXISTS_CONDITION], coloumns=[
-    {?COLOUMN_COLOUMN_SET, row_list([<<"boss">>])}
-  ]},
-  ColoumnCondition = #row{tables=[?VALUE_CONDITION_EQUALS], coloumns=[
-    {?COLOUMN_COLOUMN_SET, row_list([<<"boss">>])},
-    {?COLOUMN_VALUE, <<"jim">>}
-  ]},
-  BossJim = #row{label= <<"Persons with boss Jim">>, tables=[?FILTER], coloumns=[
-    {?COLOUMN_SET, Persons},
-    {?COLOUMN_CONDITIONS, [ColoumnExists, ColoumnCondition]}
-  ]},
-  #row{uri= <<"sample_set">>, label= <<"Sample set">>, tables=[?UNION], coloumns=[
-    {?COLOUMN_SETS, [
-      BossJim,
-      #row{tables=[?ROW_LIST], coloumns=[{?COLOUMN_ROWS, [<<"jim">>]}]}
-    ]}
-  ]}.
-
-record_set() ->
-  Persons = #tables2rows{tables=[<<"employee">>]},
-  ColoumnExists = #coloumn_exists{coloumns=[<<"boss">>]},
-  ColoumnConditions = #value_equals{coloumns= [<<"boss">>], value= <<"jim">>},
-  BossJim = #filter{set=Persons, conditions=[ColoumnExists, ColoumnConditions]},
-  #union{sets=[BossJim, [<<"jim">>]]}.
-
-row_list(Rows) ->
-  #row{tables=[?ROW_LIST], coloumns=[{?COLOUMN_ROWS, Rows}]}.

@@ -25,26 +25,6 @@
 -define(COLOUMN_OPTIONAL, <<"optional">>).
 -define(COLOUMN_INVERSE, <<"inverse">>).
 
-% Set Types
--define(SET, <<"set">>).
--define(ROW_LIST, <<"row_list">>).
--define(PROJECT_SET, <<"project_set">>).
--define(SET_OPERATION, <<"set_operation">>).
--define(INTERSECTION, <<"intersection">>).
--define(UNION, <<"union">>).
-
--define(TABLE_TRANSFORM, <<"table_transform">>).
--define(TABLE2CELLS, <<"transform_table2cells">>).
--define(TABLE2COLOUMNS, <<"transform_table2coloumns">>).
--define(COLOUMNS2TABLES, <<"transform_coloumns2tables">>).
--define(TABLES2TABLE, <<"transform_tables2table">>).
-
--define(FILTER, <<"filter">>).
-
--define(CONDITION, <<"condition">>).
--define(COLOUMN_EXISTS_CONDITION, <<"coloumn_exists_condition">>).
--define(VALUE_CONDITION, <<"value_condition">>).
--define(VALUE_CONDITION_EQUALS, <<"value_condition_equals">>).
 
 % Set Properties
 -define(COLOUMN_ROWS, <<"coloumn_rows">>).
@@ -60,17 +40,7 @@
 -record(coloumn, {uri, label, tables=[?COLOUMN], coloumns=[], range=[?ROW], arity=?ARITY_ONE,
   inverse, optional=false}).
 
-% Set records
--record(union, {sets}).
--record(intersection, {sets}).
--record(filter, {set, conditions}).
--record(rows2values, {rows, coloumns}).
--record(rows2coloumns, {rows}).
--record(coloumns2rows, {coloumns}).
--record(tables2rows, {tables}).
 
--record(value_equals, {coloumns, value}).
--record(coloumn_exists, {coloumns}).
 
 % Database records
 -record(db_rows, {uri, label, coloumns=[]}).
