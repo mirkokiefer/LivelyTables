@@ -29,6 +29,8 @@ rows() ->
 
 rows_updated() ->
   UpdatedPaul = #row{uri= uri(<<"employee">>, <<"paul">>), coloumns=[
+    {uri(?COLOUMN_ID, <<"age">>), 30},
+    {uri(?COLOUMN_ID, <<"salary">>), 5000},
     {uri(?COLOUMN_ID, <<"boss">>), uri(<<"manager">>, <<"jim">>)}
   ]},
   [UpdatedPaul].

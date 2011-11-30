@@ -85,19 +85,22 @@ coloumnvalues2columns(ColumnValues) -> [Coloumn || {Coloumn, _} <- ColumnValues]
 
 merge_rows(Row, undefined) -> Row;
 
-merge_rows(NewRow, OldRow) ->
+merge_rows(NewRow=#row{uri=URI}, OldRow) ->
+  TableURI = utils:row_uri2table_uri(URI),
+  LegalColoumns = table_coloumns(TableURI),
   #row{label=OldLabel, coloumns=OldColoumns} = OldRow,
   #row{label=NewLabel, coloumns=NewColoumns} = NewRow,
   MergedLabel = case NewLabel of
     undefined -> OldLabel;
     _ -> NewLabel
   end,
-  MergedColoumns = merge_coloumns(OldColoumns, NewColoumns),
+  MergedColoumns = merge_coloumns(OldColoumns, NewColoumns, LegalColoumns),
   NewRow#row{label=MergedLabel, coloumns=MergedColoumns}.
 
-merge_coloumns(OldColoumns, NewColoumns) ->
+merge_coloumns(OldColoumns, NewColoumns, LegalColoumns) ->
   NewColoumnURIs = [URI || {URI, _} <- NewColoumns],
   LeftOutColoumns = [Prop || Prop={URI,_} <- OldColoumns,
-    lists:member(URI, NewColoumnURIs) == false
+    lists:member(URI, NewColoumnURIs) == false,
+    lists:member(URI, LegalColoumns) == false
   ],
   LeftOutColoumns ++ NewColoumns.
