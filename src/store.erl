@@ -10,7 +10,7 @@
 -export([init/0, reset/0, delete/0, name/0]).
 -export([transaction/1, write/1]).
 -export([read_row/1, read_table/1, read_coloumn/1]).
--export([tables_with_legal_coloumns/1, read_rows_of_table/1, read_tables_of_row/1,
+-export([tables_with_legal_coloumns/1, read_rows_of_table/1, read_tables_of_row/1, in_table/2,
   read_parent_tables/1, read_child_tables/1, read_direct_child_tables/1]).
 
 -include("../include/records.hrl").
@@ -35,7 +35,6 @@ write([]) -> {ok, success};
 
 write(Row=#row{uri=URI, label=Label, coloumns=Coloumns}) ->
   #row_uri{table=TableID, row=RowID} = URI,
-  utils:log({write, StoreName, RowID}),
   DBRow = #db_rows{row_id=RowID, label=Label, coloumns=Coloumns},
   Rows2Table = #db_rows2table{row_id=RowID, table_id=TableID},
   TableIncludes = db_table_includes_records(RowID, Row),
@@ -81,6 +80,21 @@ read_rows_of_table(TableID) ->
   lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableID|read_child_tables(TableID)]]).
 
 read_direct_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
+
+in_table(RowID, LegalTableID) ->
+  Tables = read_tables_of_row(RowID),
+  in_table_internal(Tables, LegalTableID).
+  
+in_table_internal(TableIDs, LegalTableID) ->
+  case lists:member(LegalTableID, TableIDs) of
+    true -> true;
+    false -> lists:any(fun(TableID) ->
+      in_table_internal(read_local_parent_tables(TableID), LegalTableID)
+    end, TableIDs)
+  end.
+
+read_local_parent_tables(TableID) ->
+  [ParentID || #row_uri{db=DB, row=ParentID} <- read_parent_tables(TableID), DB == StoreName].
 
 read_parent_tables(TableID) ->
   [ParentID || #db_table_includes{included_table_id=ParentID} <- Store:read_parent_tables(TableID)].

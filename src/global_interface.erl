@@ -29,6 +29,15 @@ read_rows(#row_uri{domain=Domain, db=DB, table=?TABLE_ID, row=Table}) ->
 
 read_row(URI=#row_uri{domain=?LOCALHOST, db=DB, table=TableID, row=RowID}) ->
   Store = local_stores:get_db(DB),
+  case Store:in_table(RowID, TableID) of
+    false -> undefined;
+    true -> read_local_row(URI, Store)
+  end;
+
+read_row(#row_uri{domain=Domain, db=DB, table=Table, row=Row}) ->
+  http_get([Domain, DB, Table, Row]).
+
+read_local_row(URI=#row_uri{row=RowID}, Store) ->
   case Store:read_row(RowID) of
     undefined -> undefined;
     Row=#row{} ->
@@ -38,10 +47,7 @@ read_row(URI=#row_uri{domain=?LOCALHOST, db=DB, table=TableID, row=RowID}) ->
       FilteredColoumns = [Coloumn || Coloumn={ColoumnURI,_} <- Coloumns++MissingCols,
         lists:member(ColoumnURI, LegalColoumns)],
       Row#row{uri=URI, coloumns=lists:sort(FilteredColoumns)}
-  end;
-
-read_row(#row_uri{domain=Domain, db=DB, table=Table, row=Row}) ->
-  http_get([Domain, DB, Table, Row]).
+  end.
 
 read_cell(?COLOUMN_PARENTS, #row_uri{domain=?LOCALHOST, db=DB, table=?TABLE_ID, row=RowID}) ->
   Store = local_stores:get_db(DB),
