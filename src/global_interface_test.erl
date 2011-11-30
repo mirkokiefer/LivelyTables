@@ -14,8 +14,8 @@ run() ->
   {ok, success}.
 
 test_validate_core() ->
-  {ok, success} = test_validate(bootstrap:meta_tables()),
-  {ok, success} = test_validate(bootstrap:meta_coloumns()).
+  {ok, success} = test_validate(setup:meta_tables()),
+  {ok, success} = test_validate(setup:meta_coloumns()).
 
 test_validate(Rows) ->
   Result = [validation:check(Each) || Each <- Rows],

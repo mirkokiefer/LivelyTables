@@ -5,7 +5,7 @@
 create_db(DB) ->
   Store = get_db(DB),
   Store:reset(),
-  bootstrap:bootstrap_db(Store),
+  setup:bootstrap_db(Store),
   Store.
 
 get_db(DB) ->

@@ -61,16 +61,10 @@ get([_DB, _TableID, _RowID, <<"html">>], _, Req) ->
   Path = "../www/",
   Req:serve_file("ui.html", filename:absname(Path)).
 
-put([<<"table">>, TableID], _, Body, Req) ->
-  Table = utils:json2table(Body),
-  NewTable = Table#table{uri=TableID},
-  {atomic, Response} = t(fun() -> store_interface:write_table(NewTable) end),
-  send(Req, valid2json(Response));
-
-put([TableID, RowID], _, Body, Req) ->
+put([DB, TableID, RowID], _, Body, Req) ->
   Row = utils:json2row(Body),
-  NewRow = Row#row{uri=RowID},
-  {atomic, Response} = t(fun() -> store_interface:write_row(NewRow, TableID) end),
+  NewRow = Row#row{uri=#row_uri{db=DB, table=TableID, row=RowID}},
+  {atomic, Response} = t(fun() -> global_interface:write_row(NewRow) end),
   send(Req, valid2json(Response)).
 
 valid2json({ok, success}) -> json({struct, [{success, true}]});
