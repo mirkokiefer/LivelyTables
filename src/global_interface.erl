@@ -18,11 +18,11 @@ read_dbs(Domain) -> not_implemented.
 
 read_tables(#db_uri{}) -> not_implemented.
 
-read_rows(#table_uri{domain=?LOCALHOST, db=DB, table=Table}) ->
+read_rows(#row_uri{domain=?LOCALHOST, db=DB, table=?TABLE_ID, row=TableID}) ->
   Store = local_stores:get_db(DB),
-  Store:read_rows_of_table(Table);
+  [#row_uri{db=DB, table=TableID, row=RowID} || RowID <- Store:read_rows_of_table(TableID)];
 
-read_rows(#table_uri{domain=Domain, db=DB, table=Table}) ->
+read_rows(#row_uri{domain=Domain, db=DB, table=?TABLE_ID, row=Table}) ->
   http_get([Domain, DB, Table]).
 
 read_row(URI=#row_uri{domain=?LOCALHOST, db=DB, table=TableID, row=RowID}) ->

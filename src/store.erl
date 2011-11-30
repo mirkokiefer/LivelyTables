@@ -51,7 +51,7 @@ write(Coloumn=#coloumn{}) ->
 db_table_includes_records(RowID, Row) ->
   case utils:row_coloumn(?COLOUMN_PARENTS, Row) of
     undefined -> [];
-    Parents -> [#db_table_includes{table_id=RowID, included_table_id=Parent} || Parent <- Parents]
+    Parents -> [#db_table_includes{table_id=RowID, included_table_id=ParentURI} || ParentURI <- Parents]
   end.
 
 % Table "Row" doesn't have included_tables so we need to implement it explicitly
@@ -77,19 +77,19 @@ read_row(RowID) ->
 read_tables_of_row(RowID) ->
   [TableID || #db_rows2table{table_id=TableID} <- Store:read_tables_of_row(RowID)].
 
-read_rows_of_table(TableURI) ->
-  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableURI|read_child_tables(TableURI)]]).
+read_rows_of_table(TableID) ->
+  lists:flatten([read_direct_rows_of_table(Each) || Each <- [TableID|read_child_tables(TableID)]]).
 
 read_direct_rows_of_table(TableURI) -> Store:read_rows_of_table(TableURI).
 
 read_parent_tables(TableID) ->
   [ParentID || #db_table_includes{included_table_id=ParentID} <- Store:read_parent_tables(TableID)].
 
-read_child_tables(TableURI) ->
-  DirectSubtables = read_direct_child_tables(TableURI),
+read_child_tables(TableID) ->
+  DirectSubtables = read_direct_child_tables(TableID),
   DirectSubtables ++ lists:flatten([read_child_tables(Each) || Each <- DirectSubtables]).
 
-read_direct_child_tables(TableURI) -> Store:read_child_tables(TableURI).
+read_direct_child_tables(TableID) -> Store:read_child_tables(#row_uri{db=StoreName, table=?TABLE_ID, row=TableID}).
 
 %utility functions
 tables_with_legal_coloumns(ValidLegalColoumns) ->

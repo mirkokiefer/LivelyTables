@@ -41,7 +41,7 @@ uri2record(URIString) ->
 
 record2uri(#row_uri{domain=Domain, db=DB, table=Table, row=Row}) ->
   URIComponents = [binary_to_list(Each) || Each <- [Domain, DB, Table, Row]],
-  string:join(URIComponents, "/").
+  list_to_binary(string:join(URIComponents, "/")).
 
 set(List) ->
   sets:to_list(sets:from_list(List)).
@@ -141,15 +141,17 @@ struct([First|Rest]) -> [struct(First)|struct(Rest)];
 struct(Row=#row{uri=URI, coloumns=Coloumns}) ->
   URIColoumns = case URI of
     undefined -> [];
-    _ -> [{?URI, URI}]
+    _ -> [{?URI_ID, record2uri(URI)}]
   end,
   {struct, URIColoumns ++ [
-    {?COLOUMN_LABEL, Row#row.label}
-  ] ++ [{Coloumn, struct(Value)} || {Coloumn, Value} <- Coloumns]};
+    {record2uri(?COLOUMN_LABEL), Row#row.label}
+  ] ++ [{record2uri(Coloumn), struct(Value)} || {Coloumn, Value} <- Coloumns]};
 
 struct(Table=#table{}) -> struct(table2row(Table));
 
 struct(Coloumn=#coloumn{}) -> struct(coloumn2row(Coloumn));
+
+struct(URI=#row_uri{}) -> record2uri(URI);
 
 struct(Any) -> Any.
 

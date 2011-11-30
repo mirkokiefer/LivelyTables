@@ -43,7 +43,8 @@ meta_coloumns() ->
 
 % per database meta data
 core_tables(DB) ->
-  Row = #table{uri= ?ROW#row_uri{db=DB}, label= <<"Row">>, parents=[?ROW]},
-  Table = #table{uri=?TABLE#row_uri{db=DB}, label= <<"Table">>, parents=[?TABLE]},
-  Coloumn = #table{uri=?COLOUMN#row_uri{db=DB}, label= <<"Coloumn">>, parents=[?COLOUMN]},
+  RowURI = ?ROW#row_uri{db=DB},
+  Row = #table{uri= RowURI, label= <<"Row">>, parents=[?ROW]},
+  Table = #table{uri=?TABLE#row_uri{db=DB}, label= <<"Table">>, parents=[?TABLE, RowURI]},
+  Coloumn = #table{uri=?COLOUMN#row_uri{db=DB}, label= <<"Coloumn">>, parents=[?COLOUMN, RowURI]},
   [Row, Table, Coloumn].

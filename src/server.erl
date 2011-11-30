@@ -33,39 +33,33 @@ loop(Req) ->
     'PUT' -> put(Tokens, Parameters, mochijson2:decode(Req:recv_body()), Req)
   end.
 
-get([TableID], _, Req) ->
-  RowURIs = store_interface:read_rows_of_table(TableID),
-  send(Req, utils:json(RowURIs));
-
-get([<<"table">>, <<"_full">>], _, Req) ->
-  TableURIs = store_interface:read_rows_of_table(?TABLE),
-  Tables = [store_interface:read_table(TableURI) || TableURI <- TableURIs],
-  send(Req, utils:json(Tables));
-
-get([TableID, <<"_full">>], _, Req) ->
-  RowURIs = store_interface:read_rows_of_table(TableID),
-  Rows = [store_interface:read_row(RowURI, TableID) || RowURI <- RowURIs],
-  send(Req, utils:json(Rows));
-
-get([<<"table">>, TableID], _, Req) ->
-  Table = store_interface:read_table(TableID),
-  send(Req, utils:json(Table));
-
 get([<<"_file">>|FileTokens], _, Req) ->
   Path = lists:flatten(["/" ++ binary_to_list(Directory) || Directory <- FileTokens]),
   Directory = filename:dirname(Path),
   Req:serve_file(filename:basename(Path), filename:absname("../www/" ++ Directory));
 
-get([TableID, RowID], _, Req) ->
-  Row = store_interface:read_row(RowID, TableID),
+get([DB], _, Req) ->
+  RowURIs = global_interface:read_tables(#db_uri{db=DB}),
+  send(Req, utils:json(RowURIs));
+
+get([DB, TableID], _, Req) ->
+  utils:log({DB, TableID}),
+  RowURIs = global_interface:read_rows(#row_uri{db=DB, table=?TABLE_ID, row=TableID}),
+  utils:log(RowURIs),
+  send(Req, utils:json(RowURIs));
+
+get([DB, TableID, <<"_full">>], _, Req) ->
+  RowURIs = global_interface:read_rows(#row_uri{db=DB, table=?TABLE_ID, row=TableID}),
+  Rows = [global_interface:read_row(RowURI) || RowURI <- RowURIs],
+  send(Req, utils:json(Rows));
+
+get([DB, TableID, RowID], _, Req) ->
+  Row = global_interface:read_row(#row_uri{db=DB, table=TableID, row=RowID}),
   send(Req, utils:json(Row));
 
-get([_TableID, _RowID, <<"html">>], _, Req) ->
+get([_DB, _TableID, _RowID, <<"html">>], _, Req) ->
   Path = "../www/",
-  Req:serve_file("ui.html", filename:absname(Path));
-
-get([_TableID, _RowID, Attachment], _, Req) ->
-  Req:serve_file(binary_to_list(Attachment), filename:absname("../www")).
+  Req:serve_file("ui.html", filename:absname(Path)).
 
 put([<<"table">>, TableID], _, Body, Req) ->
   Table = utils:json2table(Body),
