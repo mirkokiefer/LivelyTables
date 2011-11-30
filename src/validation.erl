@@ -6,25 +6,24 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(validation, [Store]).
+-module(validation).
 
--export([check/1]).
+-export([check/1, check/2]).
 
 -include("../include/records.hrl").
 
-check(Table = #table{}) -> validate_row(utils:table2row(Table));
-check(Coloumn = #coloumn{}) -> validate_row(utils:coloumn2row(Coloumn));
-check(Row = #row{}) -> validate_row(Row).
+check(Table = #table{}) -> check(utils:table2row(Table));
+check(Coloumn = #coloumn{}) -> check(utils:coloumn2row(Coloumn));
+check(Row = #row{uri=URI}) -> check(Row, utils:row_uri2table_uri(URI)).
 
-validate_row(Row) ->
-  {ValidTable, TableErrors} = validate_table_requirements(Row),
+check(Row, TableURI) ->
+  {ValidTable, TableErrors} = validate_table_requirements(Row, TableURI),
   {ValidColoumns, ColoumnErrors} = validate_coloumns(Row),
   {ValidTable and ValidColoumns, TableErrors++ColoumnErrors}.
 
-validate_table_requirements(Row=#row{tables=Tables}) ->
-  LegalCols = lists:flatten([Store:read_coloumns_of_table(Table) || Table <- Tables]),
-  Results = [validate_legal_coloumns(LegalColoumns, Row) || #table{legal_coloumns=LegalColoumns} <- LegalCols],
-  sum_result(Results).
+validate_table_requirements(Row=#row{}, TableURI) ->
+  LegalColoumns = global_interface:table_coloumns(TableURI),
+  validate_legal_coloumns(LegalColoumns, Row).
 
 validate_legal_coloumns(Coloumns, Row) -> validate_legal_coloumns(Coloumns, Row, {true, []}).
 validate_legal_coloumns([First|Rest], Row, {SumValid, SumErrors}) ->
@@ -33,29 +32,21 @@ validate_legal_coloumns([First|Rest], Row, {SumValid, SumErrors}) ->
 validate_legal_coloumns([], _, Result) -> Result.
 
 validate_legal_coloumn(?COLOUMN_LABEL, #row{}) -> {true, []};
-validate_legal_coloumn(?COLOUMN_TABLES, #row{}) -> {true, []};
 validate_legal_coloumn(LegalColoumn, #row{coloumns=Coloumns}) ->
   ColoumnURIs = [ColoumnURI || {ColoumnURI, _} <- Coloumns],
   case lists:member(LegalColoumn, ColoumnURIs) of
     true -> {true, []};
-    false -> case Store:read_coloumn(LegalColoumn) of
-      #coloumn{optional=false} -> {false, legal_coloumn_missing(LegalColoumn)};
-      #coloumn{optional=true} -> {true, []}
+    false -> case global_interface:read_cell(?COLOUMN_OPTIONAL, LegalColoumn) of
+      false -> {false, legal_coloumn_missing(LegalColoumn)};
+      true -> {true, []}
     end
   end.
 
-validate_coloumns(Row=#row{tables=Tables, coloumns=Coloumns}) ->
-  {TablesExist, TableErrors} = case Tables of
-    [] -> {false, legal_coloumn_missing(?COLOUMN_TABLES)};
-    _ -> {true, []}
-  end,
-  {ValuesValid, ValuesErrors} = validate_coloumn_values(Coloumns, Row),
-  {TablesExist and ValuesValid, TableErrors ++ ValuesErrors}.
-
-validate_coloumn_values(Coloumns, Row) -> validate_coloumn_values(Coloumns, Row, {true, []}).
+validate_coloumns(Row=#row{coloumns=Coloumns}) ->
+  validate_coloumn_values(Coloumns, Row, {true, []}).
 
 validate_coloumn_values([{ColoumnURI, Value}|Rest], Row, {Valid, Errors}) ->
-  {ValidColoumn, ColoumnErrors} = case Store:read_coloumn(ColoumnURI) of
+  {ValidColoumn, ColoumnErrors} = case utils:row2coloumn(global_interface:read_row(ColoumnURI)) of
     undefined -> {false, coloumn_not_exists(ColoumnURI, Value)};
     #coloumn{range=Range, arity=Arity, optional=Optional} -> 
       Result = validate_coloumn_range(Range, Arity, Optional, Value, Row),
@@ -86,15 +77,11 @@ validate_coloumn_range(Range, ?ARITY_ONE, Optional, Value=#table{}, Row) ->
 validate_coloumn_range(Range, ?ARITY_ONE, Optional, Value=#coloumn{}, Row) ->
   validate_coloumn_range(Range, ?ARITY_ONE, Optional, utils:coloumn2row(Value), Row);
 
-validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{tables=Tables}, _Row) ->
-  case validate_row(Value) of
-    {true, _} ->
-      Parents = Tables ++ lists:flatten([Store:read_parent_tables(Table) || Table <- Tables]),
-      {lists:member(Range, Parents), []};
-    {false, Errors} -> {false, Errors}
-  end;
-validate_coloumn_range(Range, ?ARITY_ONE, _, Value, _Row) ->
-  {lists:member(Range, Store:read_tables_of_row(Value)), []}.
+validate_coloumn_range(Range, ?ARITY_ONE, _, Value=#row{}, _Row) -> check(Value, Range);
+
+validate_coloumn_range(Range, ?ARITY_ONE, _, RowURI=#row_uri{}, _Row) ->
+  ValuesTable = utils:row_uri2table_uri(RowURI),
+  {lists:member(Range, global_interface:flat_table_hierarchy(ValuesTable)), []}.
 
 %Merges Error results
 sum_result(Result) -> sum_result(Result, {true, []}).
@@ -106,9 +93,9 @@ sum_result([], SumResult) -> SumResult.
 legal_coloumn_missing(LegalColoumn) -> [[{message, <<"Coloumn missing on row">>}, {value, LegalColoumn}]].
 coloumn_not_exists(Coloumn, Value) ->
   [[{message, <<"Coloumn does not exist">>}, {coloumn, Coloumn}, {value, Value}]].
-invalid_coloumn_value(Row=#row{uri=URI}, Coloumn, Range, []) ->
+invalid_coloumn_value(Row=#row{uri=_URI}, Coloumn, Range, []) ->
   [[{message, <<"Invalid coloumn value">>}, {row, Row}, {range, Range}, {coloumn,Coloumn}]];
-invalid_coloumn_value(Row=#row{uri=URI}, Coloumn, Range, Details) ->
+invalid_coloumn_value(Row=#row{uri=_URI}, Coloumn, Range, Details) ->
   [[{message, <<"Invalid coloumn value">>}, {row, Row}, {range, Range}, {coloumn,Coloumn},
     {details, Details}]].
 arity_error() -> [[{message, <<"Arity is 'many' but only single value">>}]].

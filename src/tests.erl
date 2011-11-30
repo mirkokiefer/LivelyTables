@@ -1,11 +1,12 @@
 -module(tests).
 -export([run/0, run_profiling/0, analyse/0, parse/0, read_trace_data/1, read_trace_data/3, module_report/2]).
 
+-include("../include/records.hrl").
+
 -record(trace_data, {function, properties}).
 
 run() ->
   Store = test_store(),
-  Store:reset(),
   git:reset(),
   utils:time_seconds(fun() -> tests(Store) end).
   
@@ -18,12 +19,15 @@ start_trace() -> fprof:trace(start, "sapiento.trace").
 
 stop_trace() -> fprof:trace(stop).
 
-test_store() -> local_stores:get(<<"test">>).
+test_store() ->
+  OldDB=local_stores:get_db(?TEST_DB),
+  OldDB:delete(),
+  local_stores:create_db(?TEST_DB).
 
 tests(Store) ->
   StoreTest = store_test:new(Store),
-  {ok, success} = StoreTest:run()
-  %{ok, success} = global_interface_test:run()
+  {ok, success} = StoreTest:run(),
+  {ok, success} = global_interface_test:run()
   %{ok, success} = git_test:run()
   .
 

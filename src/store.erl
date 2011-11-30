@@ -6,8 +6,8 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(store, [Store]).
--export([init/0, reset/0, delete/0]).
+-module(store, [StoreName, Store]).
+-export([init/0, reset/0, delete/0, name/0]).
 -export([transaction/1, write/1]).
 -export([read_row/1, read_table/1, read_coloumn/1]).
 -export([tables_with_legal_coloumns/1, read_rows_of_table/1, read_tables_of_row/1,
@@ -22,6 +22,8 @@ reset() -> Store:reset().
 
 delete() -> Store:delete().
 
+name() -> StoreName.
+
 transaction(Fun) -> Store:transaction(Fun).
 
 % write without validation
@@ -33,16 +35,24 @@ write([]) -> {ok, success};
 
 write(Row=#row{uri=URI, label=Label, coloumns=Coloumns}) ->
   #row_uri{table=TableID, row=RowID} = URI,
+  utils:log({write, StoreName, RowID}),
   DBRow = #db_rows{row_id=RowID, label=Label, coloumns=Coloumns},
   Rows2Table = #db_rows2table{row_id=RowID, table_id=TableID},
-  git:write(Row),
-  Store:write([DBRow, Rows2Table]);
+  TableIncludes = db_table_includes_records(RowID, Row),
+  %git:write(Row),
+  Store:write([DBRow, Rows2Table] ++ TableIncludes);
 
 write(Table=#table{}) ->
   write(utils:table2row(Table));
 
 write(Coloumn=#coloumn{}) ->
     write(utils:coloumn2row(Coloumn)).
+
+db_table_includes_records(RowID, Row) ->
+  case utils:row_coloumn(?COLOUMN_PARENTS, Row) of
+    undefined -> [];
+    Parents -> [#db_table_includes{table_id=RowID, included_table_id=Parent} || Parent <- Parents]
+  end.
 
 % Table "Row" doesn't have included_tables so we need to implement it explicitly
 read_table(TableID) ->

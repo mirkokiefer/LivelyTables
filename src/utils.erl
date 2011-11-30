@@ -63,7 +63,7 @@ is_subset(Subset, List) ->
   sets:is_subset(sets:from_list(Subset), sets:from_list(List)).
 
 row_uri2table_uri(#row_uri{domain=Domain, db=DB, table=Table}) ->
-  #row_uri{domain=Domain, db=DB, table=?TABLE, row=Table}.
+  #row_uri{domain=Domain, db=DB, table=?TABLE_ID, row=Table}.
 
 row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
   case lists:keyfind(PropURI, 1, Coloumns) of
