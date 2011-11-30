@@ -43,9 +43,7 @@ get([DB], _, Req) ->
   send(Req, utils:json(RowURIs));
 
 get([DB, TableID], _, Req) ->
-  utils:log({DB, TableID}),
   RowURIs = global_interface:read_rows(#row_uri{db=DB, table=?TABLE_ID, row=TableID}),
-  utils:log(RowURIs),
   send(Req, utils:json(RowURIs));
 
 get([DB, TableID, <<"_full">>], _, Req) ->
