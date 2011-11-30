@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc HTTP server
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(git).
 -export([reset/0, git/1, transaction/1, write/1, read_row/1, read_table/1, read_coloumn/1]).
 -include("../include/records.hrl").
