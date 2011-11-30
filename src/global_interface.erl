@@ -1,3 +1,11 @@
+%%%------------------------------------------------------------------- 
+%%% @author Mirko Kiefer <mail@mirkokiefer.com>
+%%% [http://www.mirkokiefer.com]
+%%% @copyright 2011 Mirko Kiefer
+%%% @doc
+%%% @end
+%%%-------------------------------------------------------------------
+
 -module(global_interface).
 
 -include("../include/records.hrl").
