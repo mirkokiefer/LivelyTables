@@ -12,7 +12,8 @@ init() ->
   bootstrap_meta().
 
 start() ->
-  mnesia:start().
+  mnesia:start(),
+  server:start().
 
 stop() -> mnesia:stop().
   
