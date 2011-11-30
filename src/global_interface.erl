@@ -16,7 +16,9 @@
 
 read_dbs(Domain) -> not_implemented.
 
-read_tables(#db_uri{}) -> not_implemented.
+read_tables(#db_uri{domain=?LOCALHOST, db=DB}) ->
+  Store = local_stores:get_db(DB),
+  [#row_uri{db=DB, table=?TABLE_ID, row=TableID} || TableID <- [?ROW_ID | Store:read_child_tables(?ROW_ID)]].
 
 read_rows(#row_uri{domain=?LOCALHOST, db=DB, table=?TABLE_ID, row=TableID}) ->
   Store = local_stores:get_db(DB),

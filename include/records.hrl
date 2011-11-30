@@ -10,12 +10,13 @@
 -define(TEST_DB, <<"testdb">>).
 
 % Core Types
+-define(ROW_ID, <<"row">>).
 -define(TABLE_ID, <<"table">>).
 -define(COLOUMN_ID, <<"coloumn">>).
 -define(LITERAL_ID, <<"literal">>).
 
 -define(TABLE, #row_uri{db=?META_DB, table= ?TABLE_ID, row= ?TABLE_ID}).
--define(ROW, #row_uri{db=?META_DB, table=?TABLE_ID, row= <<"row">>}).
+-define(ROW, #row_uri{db=?META_DB, table=?TABLE_ID, row= ?ROW_ID}).
 -define(COLOUMN,  #row_uri{db=?META_DB, table=?TABLE_ID, row= <<"coloumn">>}).
 -define(LITERAL,  #row_uri{db=?META_DB, table=?TABLE_ID, row= ?COLOUMN_TYPE_ID}).
 -define(VIEW,  #row_uri{db=?META_DB, table=?TABLE_ID, row= <<"view">>}).
