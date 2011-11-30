@@ -5,6 +5,7 @@
 
 run() ->
   test_validate_core(),
+  {ok, success} = test_write_tables(),
   {ok, success} = test_write_coloumns(),
   {ok, success} = test_write_invalid_rows(),
   {ok, success} = test_write_valid_rows(),
@@ -19,6 +20,10 @@ test_validate_core() ->
 test_validate(Rows) ->
   Result = [validation:check(Each) || Each <- Rows],
   check_each_valid(Result).
+
+test_write_tables() ->
+  Result = [global_interface:write_table(Each) || Each <- test_data:tables()],
+  check_each_result(Result).
 
 test_write_coloumns() ->
   Result = [global_interface:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],

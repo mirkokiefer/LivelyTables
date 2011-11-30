@@ -49,6 +49,15 @@ read_cell(ColoumnURI, RowURI=#row_uri{db=DB, row=RowID}) ->
   Store = local_stores:get_db(DB),
   utils:row_coloumn(ColoumnURI, Store:read_row(RowID)).
 
+write_row(Row=#row{uri=#row_uri{domain=?LOCALHOST, db=DB, table=?TABLE_ID, row=RowID}}) ->
+  Store = local_stores:get_db(DB),
+  Table = utils:row2table(Row),
+  Parents = case Table#table.parents of
+    undefined -> [?ROW#row_uri{db=DB}];
+    Any -> Any
+  end,
+  Store:transaction(fun() -> Store:write(Table#table{parents=Parents}) end);
+
 write_row(Row=#row{uri=#row_uri{domain=?LOCALHOST, db=DB, table=TableID, row=RowID}}) ->
   Store = local_stores:get_db(DB),
   OldRow = Store:read_row(RowID),

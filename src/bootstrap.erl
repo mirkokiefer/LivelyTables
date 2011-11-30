@@ -18,11 +18,11 @@ meta_tables() ->
   Row = #table{uri= ?ROW, label= <<"Row">>, parents=[], legal_coloumns=[
     ?COLOUMN_LABEL
   ]},
-  Table = #table{uri= ?TABLE, label= <<"Table">>, legal_coloumns=[
+  Table = #table{uri= ?TABLE, label= <<"Table">>, parents=[?ROW], legal_coloumns=[
     ?COLOUMN_LEGALCOLOUMNS,
     ?COLOUMN_PARENTS
   ]},
-  Coloumn = #table{uri= ?COLOUMN, label= <<"Coloumn">>,
+  Coloumn = #table{uri= ?COLOUMN, label= <<"Coloumn">>, parents=[?ROW],
     legal_coloumns=[
       ?COLOUMN_RANGE,
       ?COLOUMN_ARITY

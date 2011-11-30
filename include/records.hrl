@@ -42,7 +42,7 @@
 
 % Core Records
 -record(row, {uri, label, coloumns=[]}).
--record(table, {uri, label, coloumns=[], parents=[?ROW], legal_coloumns=[]}).
+-record(table, {uri, label, coloumns=[], parents, legal_coloumns=[]}).
 -record(coloumn, {uri, label, coloumns=[], range=[?ROW], arity=?ARITY_ONE, inverse, optional=false}).
 
 % Database records
