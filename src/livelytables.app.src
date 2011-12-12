@@ -1,0 +1,24 @@
+{application, livelytables,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {modules, [
+    global_interface,
+    livelytables_app,
+    livelytables_sup,
+    local_stores,
+    pluggable_store,
+    server,
+    store,
+    utils,
+    validation
+  ]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  mnesia
+                 ]},
+  {mod, { livelytables_app, []}},
+  {env, []}
+ ]}.

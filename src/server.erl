@@ -8,7 +8,16 @@
 
 -module(server).
 
--export([start/0, stop/0, loop/1]).
+-export([start_link/0]).
+
+% mochiweb callbacks
+-export([loop/1]).
+
+% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+         terminate/2, code_change/3]).
+
+-behaviour(gen_server).
 
 -include("../include/records.hrl").
 
@@ -18,12 +27,29 @@
             {name, http_sapiento}
             ]).
 
-start() ->
-  {ok, Http} = mochiweb_http:start(?HTTP_OPTS),
-  Http.
 
-stop() ->
-  mochiweb_http:stop(http_routing).
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+init([]) ->
+  {ok, _Http} = mochiweb_http:start(?HTTP_OPTS),
+  {ok, []}.
+
+handle_call(hello, _From, State) ->
+  {reply, ok, State}.
+
+handle_cast(_Msg, State) ->
+  {noreply, State}.
+
+handle_info(_Info, State) ->
+  {noreply, State}.
+
+terminate(_Reason, _State) ->
+  mochiweb_http:stop(http_routing),
+  ok.
+
+code_change(_OldVsn, State, _Extra) ->
+  {ok, State}.
 
 loop(Req) ->
   Tokens = [utils:encode(Token) || Token <- string:tokens(Req:get(path), "/")],
