@@ -1,0 +1,1 @@
+erl -pa apps/livelytables/ebin deps/*/ebin
