@@ -1,36 +1,23 @@
 -module(setup).
 
--export([start/0, stop/0, reset/0]).
--export([bootstrap_db/1]).
+-export([reset/0]).
 -export([meta_tables/0, meta_coloumns/0]).
 
 -include("../include/records.hrl").
 
-init() ->
-  mnesia:create_schema([node()]),
-  start(),
-  bootstrap_meta().
-
-start() ->
-  mnesia:start(),
-  server:start().
-
-stop() -> mnesia:stop().
-  
 % deletes and re-creates the schema
 reset() ->
   mnesia:stop(),
   mnesia:delete_schema([node()]),
-  init().
+  mnesia:create_schema([node()]),
+  mnesia:start(),
+  bootstrap_meta().
 
 bootstrap_meta() ->
   Store = local_stores:get_db(?META_DB),
   Store:reset(),
   Store:transaction(fun() -> Store:write(meta_tables() ++ meta_coloumns()) end),
   {ok, success}.
-
-bootstrap_db(Store) ->
-  Store:transaction(fun() -> Store:write(core_tables(Store:name())) end).
 
 % global meta data definition
 meta_tables() ->
@@ -59,11 +46,3 @@ meta_coloumns() ->
   Inverse = #coloumn{uri=?COLOUMN_INVERSE, label= <<"Inverse">>, range=?COLOUMN, optional=true},
   Optional = #coloumn{uri=?COLOUMN_OPTIONAL, label= <<"Optional">>, range=?COLOUMN_TYPE_BOOLEAN},
   [Label, Parents, LegalColoumns, Range, Arity, Inverse, Optional].
-
-% per database meta data
-core_tables(DB) ->
-  RowURI = ?ROW#row_uri{db=DB},
-  Row = #table{uri= RowURI, label= <<"Row">>, parents=[?ROW]},
-  Table = #table{uri=?TABLE#row_uri{db=DB}, label= <<"Table">>, parents=[?TABLE, RowURI]},
-  Coloumn = #table{uri=?COLOUMN#row_uri{db=DB}, label= <<"Coloumn">>, parents=[?COLOUMN, RowURI]},
-  [Row, Table, Coloumn].
