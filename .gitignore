@@ -4,6 +4,6 @@ src/sapiento.trace
 src/sapiento.txt
 src/Mnesia.*
 ebin/*
-rel/*
+rel/livelytables/*
 deps/*
 */ebin/*
