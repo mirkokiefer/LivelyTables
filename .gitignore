@@ -5,3 +5,5 @@ src/sapiento.txt
 src/Mnesia.*
 ebin/*
 rel/*
+deps/*
+*/ebin/*
