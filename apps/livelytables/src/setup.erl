@@ -1,6 +1,6 @@
 -module(setup).
 
--export([reset/0]).
+-export([reset/0, ensure/0]).
 -export([meta_tables/0, meta_coloumns/0]).
 
 -include("../include/records.hrl").
@@ -12,6 +12,14 @@ reset() ->
   mnesia:create_schema([node()]),
   mnesia:start(),
   bootstrap_meta().
+
+ensure() ->
+  mnesia:start(),
+  Tables = local_stores:table_names(?META_DB),
+  case utils:is_subset(Tables, mnesia:system_info(tables)) of
+    true -> ok;
+    false -> reset()
+  end.
 
 bootstrap_meta() ->
   Store = local_stores:get_db(?META_DB),
