@@ -1,47 +1,54 @@
 -module(global_interface_test).
--export([run/0]).
+
+-include_lib("eunit/include/eunit.hrl").
 
 -include("../include/records.hrl").
 
-run() ->
-  test_validate_core(),
-  {ok, success} = test_write_tables(),
-  {ok, success} = test_write_coloumns(),
-  {ok, success} = test_write_invalid_rows(),
-  {ok, success} = test_write_valid_rows(),
-  {ok, success} = test_update_valid_rows(),
-  {ok, success} = test_update_invalid_rows(),
-  {ok, success}.
+validate_test_() ->
+  {setup, fun setup/0, fun cleanup/1, {inorder, [
+    validate_core()
+  ]}}.
 
-test_validate_core() ->
-  {ok, success} = test_validate(setup:meta_tables()),
-  {ok, success} = test_validate(setup:meta_coloumns()).
+global_interface_test_() ->
+  {setup, fun setup/0, fun cleanup/1, {inorder, [
+    ?_assertMatch({ok, success}, write_tables()),
+    ?_assertMatch({ok, success}, write_coloumns()),
+    ?_assertMatch({ok, success}, write_invalid_rows()),
+    ?_assertMatch({ok, success}, write_valid_rows()),
+    ?_assertMatch({ok, success}, update_valid_rows()),
+    ?_assertMatch({ok, success}, update_invalid_rows())
+  ]}}.
 
-test_validate(Rows) ->
+validate_core() -> [
+    ?_assertMatch({ok, success}, validate(setup:meta_tables())),
+    ?_assertMatch({ok, success}, validate(setup:meta_coloumns()))
+  ].
+
+validate(Rows) ->
   Result = [validation:check(Each) || Each <- Rows],
   check_each_valid(Result).
 
-test_write_tables() ->
+write_tables() ->
   Result = [global_interface:write_table(Each) || Each <- test_data:tables()],
   check_each_result(Result).
 
-test_write_coloumns() ->
+write_coloumns() ->
   Result = [global_interface:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],
   check_each_result(Result).
 
-test_write_invalid_rows() ->
+write_invalid_rows() ->
   Result = [global_interface:write_row(Row) || Row <- test_data:invalid_rows()],
   check_each_invalid_result(Result).
 
-test_write_valid_rows() ->
+write_valid_rows() ->
   Result = [global_interface:write_row(Row) || Row <- test_data:rows()],
   check_each_result(Result).
 
-test_update_valid_rows() ->
+update_valid_rows() ->
   Result = [global_interface:write_row(Row) || Row <- test_data:rows_updated()],
   check_each_result(Result).
 
-test_update_invalid_rows() ->
+update_invalid_rows() ->
   Result = [global_interface:write_row(Row) || Row <- test_data:invalid_rows_updated()],
   check_each_invalid_result(Result).
 
@@ -68,3 +75,10 @@ check_each_invalid_result(Result) ->
     true -> {ok, success};
     false -> {error, Result}
   end.
+  
+setup() ->
+  setup:ensure(),
+  local_stores:create_db(?TEST_DB).
+  
+cleanup(Store) ->
+  Store:delete().

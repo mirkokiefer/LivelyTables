@@ -4,5 +4,4 @@
 
 -include("../include/records.hrl").
 
--export([test/0]).
 

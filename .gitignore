@@ -8,3 +8,4 @@ rel/livelytables/*
 deps/*
 */ebin/*
 *.dump
+*.eunit*
