@@ -7,3 +7,4 @@ ebin/*
 rel/livelytables/*
 deps/*
 */ebin/*
+*.dump
