@@ -2,7 +2,7 @@ www/capp
 git_store
 src/sapiento.trace
 src/sapiento.txt
-src/Mnesia.*
+*Mnesia.*
 ebin/*
 rel/livelytables/*
 deps/*
