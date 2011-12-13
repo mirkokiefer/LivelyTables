@@ -10,6 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    setup:ensure(),
     livelytables_sup:start_link().
 
 stop(_State) ->
