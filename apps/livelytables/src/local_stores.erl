@@ -30,5 +30,5 @@ core_tables(DB) ->
   RowURI = ?ROW#row_uri{db=DB},
   Row = #table{uri= RowURI, label= <<"Row">>, parents=[?ROW]},
   Table = #table{uri=?TABLE#row_uri{db=DB}, label= <<"Table">>, parents=[?TABLE, RowURI]},
-  Coloumn = #table{uri=?COLOUMN#row_uri{db=DB}, label= <<"Coloumn">>, parents=[?COLOUMN, RowURI]},
-  [Row, Table, Coloumn].
+  Column = #table{uri=?COLUMN#row_uri{db=DB}, label= <<"Column">>, parents=[?COLUMN, RowURI]},
+  [Row, Table, Column].

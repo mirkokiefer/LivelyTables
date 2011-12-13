@@ -12,7 +12,7 @@ validate_test_() ->
 global_interface_test_() ->
   {setup, fun setup/0, fun cleanup/1, {inorder, [
     ?_assertMatch({ok, success}, write_tables()),
-    ?_assertMatch({ok, success}, write_coloumns()),
+    ?_assertMatch({ok, success}, write_columns()),
     ?_assertMatch({ok, success}, write_invalid_rows()),
     ?_assertMatch({ok, success}, write_valid_rows()),
     ?_assertMatch({ok, success}, update_valid_rows()),
@@ -21,7 +21,7 @@ global_interface_test_() ->
 
 validate_core() -> [
     ?_assertMatch({ok, success}, validate(setup:meta_tables())),
-    ?_assertMatch({ok, success}, validate(setup:meta_coloumns()))
+    ?_assertMatch({ok, success}, validate(setup:meta_columns()))
   ].
 
 validate(Rows) ->
@@ -32,8 +32,8 @@ write_tables() ->
   Result = [global_interface:write_table(Each) || Each <- test_data:tables()],
   check_each_result(Result).
 
-write_coloumns() ->
-  Result = [global_interface:write_coloumn(Coloumn) || Coloumn <- test_data:coloumns()],
+write_columns() ->
+  Result = [global_interface:write_column(Column) || Column <- test_data:columns()],
   check_each_result(Result).
 
 write_invalid_rows() ->

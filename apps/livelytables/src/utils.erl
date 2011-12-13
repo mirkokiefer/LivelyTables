@@ -10,10 +10,10 @@
 -export([time_seconds/1, write_file/2, read_file/1, log/1, encode/1,
   uri2record/1, record2uri/1,
   set/1, filter_element/2, is_joint/2, is_disjoint/2, is_subset/2,
-  row_uri2table_uri/1, row_coloumn/2,
-  row2coloumnlist/1, coloumnlist2row/1,
-  row2table/1, table2row/1, row2coloumn/1, coloumn2row/1,
-  json/1, json2row/1, json2table/1, json2coloumn/1]).
+  row_uri2table_uri/1, row_column/2,
+  row2columnlist/1, columnlist2row/1,
+  row2table/1, table2row/1, row2column/1, column2row/1,
+  json/1, json2row/1, json2table/1, json2column/1]).
 
 -include("../include/records.hrl").
 
@@ -65,31 +65,31 @@ is_subset(Subset, List) ->
 row_uri2table_uri(#row_uri{domain=Domain, db=DB, table=Table}) ->
   #row_uri{domain=Domain, db=DB, table=?TABLE_ID, row=Table}.
 
-row_coloumn(PropURI, #row{coloumns=Coloumns}) ->
-  case lists:keyfind(PropURI, 1, Coloumns) of
+row_column(PropURI, #row{columns=Columns}) ->
+  case lists:keyfind(PropURI, 1, Columns) of
     false -> undefined;
     {_, Value} -> Value
   end.
 
-row2coloumnlist(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
+row2columnlist(#row{uri=URI, label=Label, columns=Columns}) ->
   [
     {?URI, URI},
-    {?COLOUMN_LABEL, Label}
-  ] ++ Coloumns.
+    {?COLUMN_LABEL, Label}
+  ] ++ Columns.
 
-coloumnlist2row([{_, URI}, {_, Label}|Rest]) ->
-  #row{uri=URI, label=Label, coloumns=Rest}.
+columnlist2row([{_, URI}, {_, Label}|Rest]) ->
+  #row{uri=URI, label=Label, columns=Rest}.
 
 row2table(undefined) -> undefined;
 
-row2table(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
-  row2table(Coloumns, #table{uri=URI, label=Label}).
+row2table(#row{uri=URI, label=Label, columns=Columns}) ->
+  row2table(Columns, #table{uri=URI, label=Label}).
 
-row2table([{ColoumnURI, Value}|Rest], Table=#table{coloumns=Coloumns}) ->
-  NewTable = case ColoumnURI of
-    ?COLOUMN_PARENTS -> Table#table{parents=Value};
-    ?COLOUMN_LEGALCOLOUMNS -> Table#table{legal_coloumns=Value};
-    _ -> Table#table{coloumns=[{ColoumnURI, Value}|Coloumns]}
+row2table([{ColumnURI, Value}|Rest], Table=#table{columns=Columns}) ->
+  NewTable = case ColumnURI of
+    ?COLUMN_PARENTS -> Table#table{parents=Value};
+    ?COLUMN_LEGALCOLUMNS -> Table#table{legal_columns=Value};
+    _ -> Table#table{columns=[{ColumnURI, Value}|Columns]}
   end,
   row2table(Rest, NewTable);
 row2table([], Table) -> Table.
@@ -97,59 +97,59 @@ row2table([], Table) -> Table.
 table2row(undefined) -> undefined;
 
 table2row(Table) ->
-  #row{uri=Table#table.uri, label=Table#table.label, coloumns=[
-    {?COLOUMN_PARENTS, Table#table.parents},
-    {?COLOUMN_LEGALCOLOUMNS, Table#table.legal_coloumns}
-  ] ++ Table#table.coloumns}.
+  #row{uri=Table#table.uri, label=Table#table.label, columns=[
+    {?COLUMN_PARENTS, Table#table.parents},
+    {?COLUMN_LEGALCOLUMNS, Table#table.legal_columns}
+  ] ++ Table#table.columns}.
 
-row2coloumn(undefined) -> undefined;
+row2column(undefined) -> undefined;
 
-row2coloumn(#row{uri=URI, label=Label, coloumns=Coloumns}) ->
-  row2coloumn(Coloumns, #coloumn{uri=URI, label=Label}).
+row2column(#row{uri=URI, label=Label, columns=Columns}) ->
+  row2column(Columns, #column{uri=URI, label=Label}).
 
-row2coloumn([{ColoumnURI, Value}|Rest], Coloumn=#coloumn{coloumns=Coloumns}) ->
-  NewColoumn = case ColoumnURI of
-    ?COLOUMN_RANGE -> Coloumn#coloumn{range=Value};
-    ?COLOUMN_ARITY -> Coloumn#coloumn{arity=Value};
-    ?COLOUMN_INVERSE -> Coloumn#coloumn{inverse=Value};
-    ?COLOUMN_OPTIONAL -> Coloumn#coloumn{optional=Value};
-    _ -> Coloumn#coloumn{coloumns=[{ColoumnURI, Value}|Coloumns]}
+row2column([{ColumnURI, Value}|Rest], Column=#column{columns=Columns}) ->
+  NewColumn = case ColumnURI of
+    ?COLUMN_RANGE -> Column#column{range=Value};
+    ?COLUMN_ARITY -> Column#column{arity=Value};
+    ?COLUMN_INVERSE -> Column#column{inverse=Value};
+    ?COLUMN_OPTIONAL -> Column#column{optional=Value};
+    _ -> Column#column{columns=[{ColumnURI, Value}|Columns]}
   end,
-  row2coloumn(Rest, NewColoumn);
-row2coloumn([], Coloumn) -> Coloumn.
+  row2column(Rest, NewColumn);
+row2column([], Column) -> Column.
 
-coloumn2row(undefined) -> undefined;
+column2row(undefined) -> undefined;
 
-coloumn2row(Coloumn) ->
-  Row=#row{uri=Coloumn#coloumn.uri, label=Coloumn#coloumn.label,
-    coloumns=[
-      {?COLOUMN_RANGE, Coloumn#coloumn.range},
-      {?COLOUMN_ARITY, Coloumn#coloumn.arity},
-      {?COLOUMN_OPTIONAL, Coloumn#coloumn.optional}
-    ] ++ Coloumn#coloumn.coloumns
+column2row(Column) ->
+  Row=#row{uri=Column#column.uri, label=Column#column.label,
+    columns=[
+      {?COLUMN_RANGE, Column#column.range},
+      {?COLUMN_ARITY, Column#column.arity},
+      {?COLUMN_OPTIONAL, Column#column.optional}
+    ] ++ Column#column.columns
   },
-  #row{coloumns=Coloumns}=Row,
-  case Coloumn#coloumn.inverse of
+  #row{columns=Columns}=Row,
+  case Column#column.inverse of
     undefined -> Row;
-    Value -> Row#row{coloumns=[{?COLOUMN_INVERSE, Value}|Coloumns]}
+    Value -> Row#row{columns=[{?COLUMN_INVERSE, Value}|Columns]}
   end.
 
 json(Element) -> mochijson2:encode(struct(Element)).
 
 struct([First|Rest]) -> [struct(First)|struct(Rest)];
 
-struct(Row=#row{uri=URI, coloumns=Coloumns}) ->
-  URIColoumns = case URI of
+struct(Row=#row{uri=URI, columns=Columns}) ->
+  URIColumns = case URI of
     undefined -> [];
     _ -> [{?URI_ID, record2uri(URI)}]
   end,
-  {struct, URIColoumns ++ [
-    {record2uri(?COLOUMN_LABEL), Row#row.label}
-  ] ++ [{record2uri(Coloumn), struct(Value)} || {Coloumn, Value} <- Coloumns]};
+  {struct, URIColumns ++ [
+    {record2uri(?COLUMN_LABEL), Row#row.label}
+  ] ++ [{record2uri(Column), struct(Value)} || {Column, Value} <- Columns]};
 
 struct(Table=#table{}) -> struct(table2row(Table));
 
-struct(Coloumn=#coloumn{}) -> struct(coloumn2row(Coloumn));
+struct(Column=#column{}) -> struct(column2row(Column));
 
 struct(URI=#row_uri{}) -> record2uri(URI);
 
@@ -161,19 +161,19 @@ json2row({struct, Elements}) ->
 json2table({struct, Elements}) ->
   row2table(parse_row_elements(Elements, #row{})).
 
-json2coloumn({struct, Elements}) ->
-  row2coloumn(parse_row_elements(Elements, #row{})).
+json2column({struct, Elements}) ->
+  row2column(parse_row_elements(Elements, #row{})).
 
-parse_row_elements([{Key, Value}|Rest], Row=#row{coloumns=Coloumns}) ->
+parse_row_elements([{Key, Value}|Rest], Row=#row{columns=Columns}) ->
   NewRow = case Key of
     ?URI -> Row#row{uri=Value};
-    ?COLOUMN_LABEL -> Row#row{label=Value};
-    _ -> Row#row{coloumns=[{Key, parse_coloumn_value(Value)}|Coloumns]}
+    ?COLUMN_LABEL -> Row#row{label=Value};
+    _ -> Row#row{columns=[{Key, parse_column_value(Value)}|Columns]}
   end,
   parse_row_elements(Rest, NewRow);
 parse_row_elements([], Row) -> Row.
 
-parse_coloumn_value([]) -> [];
-parse_coloumn_value([First|Rest]) -> [parse_coloumn_value(First)|parse_coloumn_value(Rest)];
-parse_coloumn_value({struct, Elements}) -> json2row({struct, Elements});
-parse_coloumn_value(Literal) -> Literal.
+parse_column_value([]) -> [];
+parse_column_value([First|Rest]) -> [parse_column_value(First)|parse_column_value(Rest)];
+parse_column_value({struct, Elements}) -> json2row({struct, Elements});
+parse_column_value(Literal) -> Literal.

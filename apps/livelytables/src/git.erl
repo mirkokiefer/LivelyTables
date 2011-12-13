@@ -7,17 +7,17 @@
 %%%-------------------------------------------------------------------
 
 -module(git).
--export([reset/0, git/1, transaction/1, write/1, read_row/1, read_table/1, read_coloumn/1]).
+-export([reset/0, git/1, transaction/1, write/1, read_row/1, read_table/1, read_column/1]).
 -include("../include/records.hrl").
 -include("../include/config.hrl").
 
 
 write(Row=#row{}) -> write_row(Row);
 write(Table=#table{}) -> write_row(utils:table2row(Table));
-write(Coloumn=#coloumn{}) -> write_row(utils:coloumn2row(Coloumn)).
+write(Column=#column{}) -> write_row(utils:column2row(Column)).
 
 write_row(Row = #row{uri=URI}) ->
-  utils:write_file(row_path(URI), utils:row2coloumnlist(Row)).  
+  utils:write_file(row_path(URI), utils:row2columnlist(Row)).  
 
 read_row(URI) ->
   read(row_path(URI)).
@@ -25,12 +25,12 @@ read_row(URI) ->
 read_table(URI) ->
   utils:row2table(read_row(URI)).
 
-read_coloumn(URI) ->
-  utils:row2coloumn(read_row(URI)).
+read_column(URI) ->
+  utils:row2column(read_row(URI)).
 
 read(Path) ->
-  {ok, ColoumnList} = utils:read_file(Path),
-  utils:coloumnlist2row(ColoumnList).
+  {ok, ColumnList} = utils:read_file(Path),
+  utils:columnlist2row(ColumnList).
 
 transaction(Fun) ->
   Value = Fun(),
