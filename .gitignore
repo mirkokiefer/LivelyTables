@@ -3,9 +3,8 @@ git_store
 src/sapiento.trace
 src/sapiento.txt
 *Mnesia.*
-ebin/*
 rel/livelytables/*
 deps/*
-*/ebin/*
+*ebin*
 *.dump
 *.eunit*
