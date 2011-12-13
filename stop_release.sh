@@ -1,0 +1,1 @@
+sh ./rel/livelytables/bin/livelytables stop
