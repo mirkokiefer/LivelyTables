@@ -1,0 +1,20 @@
+{
+  "name": "coffeetables",
+  "description": "",
+  "version": "0.0.1",
+  "author": "Mirko Kiefer <email@mirkokiefer.com> (http://www.mirkokiefer.com)",
+  "main": "./lib/main",
+  "directories": {
+    "test": "./test",
+    "lib": "./lib"
+  },
+  "dependencies": {
+    "request": "*"
+  },
+  "devDependencies": {
+    "vows": "*"
+  },
+  "engines": {
+    "node": "*"
+  }
+}

@@ -8,3 +8,4 @@ deps/*
 *ebin*
 *.dump
 *.eunit*
+*/node_modules/*
